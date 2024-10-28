@@ -9,8 +9,17 @@ import SwiftUI
 
 struct Splash_View: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+            VStack {
+                Spacer()
+                Image("App Logo") // Make sure the image is added to your Assets.xcassets
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200, height: 200)
+                Spacer()
+            }
+            .background(Color.white) // Set the background color to match your design
+            .edgesIgnoringSafeArea(.all) // Make sure the splash screen fills the entire screen
+        }
 }
 
 #Preview {
