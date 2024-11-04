@@ -34,7 +34,7 @@ struct Signup_Via_Email: View {
                 .foregroundColor(Color(hex: "#606084"))
                 .padding(.horizontal, 20)
             
-            Spacer()
+//            Spacer()
             
             VStack(spacing: 15) {
                 CustomTextField(placeholder: "Enter your email address", text: $email)

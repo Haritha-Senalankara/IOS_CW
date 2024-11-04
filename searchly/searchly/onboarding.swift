@@ -15,22 +15,25 @@ struct onboarding: View {
                 Image("App Logo") // Make sure this matches the image in your assets
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
+                    .frame(width: 133, height: 121)
+                    .padding(.top, 40)
                 
-                Text("Get Started with Your Account")
+                Text("Get Started with Your\n Account")
                     .font(.custom("Heebo-Bold", size: 26))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#102A36"))
+                    .padding(.top,24)
                 
                 Text("Find the best deals online and locally. Filter products by price, location, and ratings to ensure you get the best value. Connect directly with vendors for quick and easy access to great offers.")
-                    .font(.custom("Heebo-Regular", size: 16))
+                    .font(.custom("Heebo-Regular", size: 14))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
                     .padding(.horizontal, 20)
+                    .padding(.top,20)
                 
                 Spacer()
                 
-                VStack(spacing: 15) {
+                VStack(spacing: 28) {
                     Button(action: {
                         // Sign In action
                     }) {
@@ -56,7 +59,9 @@ struct onboarding: View {
                             .foregroundColor(Color(hex: "#F2A213"))
                     }
                     .padding(.horizontal, 30)
+//                    .padding(.top,)
                 }
+                .padding(.top,50)
                 
                 Button(action: {
                     // Skip action
@@ -65,7 +70,8 @@ struct onboarding: View {
                         .font(.custom("Heebo-Regular", size: 14))
                         .foregroundColor(Color(hex: "#102A36"))
                 }
-                .padding(.top, 10)
+                .padding(.top, 120)
+                .padding(.bottom,30)
                 
                 Spacer()
             }

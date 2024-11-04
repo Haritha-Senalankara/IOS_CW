@@ -9,8 +9,7 @@ import SwiftUI
 
 struct Home: View {
     @State private var showPriceFilter = false
-        @State private var selectedPrice: Double = 350000 // Default value
-    
+    @State private var selectedPrice: Double = 350000 // Default value
     
     var body: some View {
         VStack(spacing: 0) {
@@ -106,6 +105,7 @@ struct PriceFilterView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
+
         VStack(spacing: 20) {
             Text("Price \(Int(selectedPrice))")
                 .font(.custom("Heebo-Regular", size: 18))
@@ -133,6 +133,7 @@ struct PriceFilterView: View {
         .padding(.bottom, 30)
         .background(Color.white)
         .cornerRadius(12)
+        
     }
 }
 
@@ -182,6 +183,7 @@ struct FilterButton: View {
                 .frame(width: 16, height: 16)
             Text(title)
                 .font(.custom("Heebo-Regular", size: 12))
+                .foregroundStyle(.black)
         }
         .padding(10)
         .frame(maxWidth: .infinity)
@@ -212,32 +214,47 @@ struct ProductCard: View {
                 .foregroundColor(.black)
                 .lineLimit(2)
             
-            Text(siteName)
-                .font(.custom("Heebo-Regular", size: 12))
-                .foregroundColor(.gray)
+            HStack(){
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height:20)
+                Text(siteName)
+                    .font(.custom("Heebo-Regular", size: 12))
+                    .foregroundColor(.gray)
+            }
             
             Text(price)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(Color(hex: "#F2A213"))
             
-            HStack(spacing: 10) {
+            HStack() {
                 HStack(spacing: 5) {
                     Image("like-icon")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 14, height: 14)
+                        .frame(width: 12.9, height: 15)
                     Text(likes)
                         .font(.custom("Heebo-Regular", size: 12))
                 }
+                .frame(width: 60,height: 30)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                 
                 HStack(spacing: 5) {
                     Image("rating-icon")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 14, height: 14)
+                        .frame(width: 12.9, height: 15)
+                        
                     Text(rating)
                         .font(.custom("Heebo-Regular", size: 12))
                 }
+                .frame(width: 60,height: 30)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             }
         }
         .padding()

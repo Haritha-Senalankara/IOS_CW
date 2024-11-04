@@ -40,7 +40,7 @@ struct Customer_Profile: View {
             .padding(.top, 50)
             .padding(.bottom, 10)
             
-//            Spacer()
+            
             
             // Profile Picture and Name Section
             VStack(spacing: 15) {
@@ -72,6 +72,7 @@ struct Customer_Profile: View {
                 }
             }
             .padding(.bottom, 40)
+            .padding(.top,50)
             
             Spacer()
             

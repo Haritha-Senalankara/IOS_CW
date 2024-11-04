@@ -18,26 +18,30 @@ struct Login_Via_Email: View {
                 Image("App Logo") // Make sure this matches the image in your assets
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
+                    .frame(width: 133, height: 121)
+                    .padding(.top,30)
                 
                 Text("Login")
                     .font(.custom("Heebo-Bold", size: 26))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#102A36"))
+                    .bold()
+                    .padding(.bottom,10)
                 
                 Text("Log in to track your favorite products, set price alerts and unlock many features.")
-                    .font(.custom("Heebo-Regular", size: 16))
+                    .font(.custom("Heebo-Regular", size: 14))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 25)
                 
                 Spacer()
                 
-                VStack(spacing: 15) {
+                VStack(spacing: 40) {
                     HStack {
                         TextField("Enter your name", text: $username)
                             .font(.custom("Heebo-Regular", size: 16))
                             .padding()
+                            .padding(.horizontal,-15)
                         
                         if !username.isEmpty {
                             Button(action: {
@@ -50,7 +54,7 @@ struct Login_Via_Email: View {
                             }
                         }
                     }
-                    .overlay(Rectangle().frame(height: 1).padding(.top, 35), alignment: .bottom)
+                    .overlay(Rectangle().frame(height: 1).padding(.top, 20), alignment: .bottom)
                     .foregroundColor(Color.gray)
                     .padding(.horizontal, 30)
                     
@@ -58,6 +62,7 @@ struct Login_Via_Email: View {
                         SecureField("Enter your password", text: $password)
                             .font(.custom("Heebo-Regular", size: 16))
                             .padding()
+                            .padding(.horizontal,-15)
                         
                         if !password.isEmpty {
                             Button(action: {
@@ -84,9 +89,9 @@ struct Login_Via_Email: View {
                                 .foregroundColor(Color(hex: "#606084"))
                         }
                         .padding(.trailing, 30)
+                        .padding(.bottom,20)
                     }
                 }
-                
                 Button(action: {
                     // Login action
                 }) {
@@ -99,15 +104,16 @@ struct Login_Via_Email: View {
                 }
                 .padding(.horizontal, 30)
                 .padding(.top, 20)
-                
+//                Spacer().frame(height:90.0)
                 Button(action: {
                     // Sign up action
                 }) {
                     Text("Sign Up")
                         .font(.custom("Heebo-Regular", size: 14))
                         .foregroundColor(Color(hex: "#102A36"))
+                    
                 }
-                .padding(.top, 10)
+                .padding(.top, 80)
                 
                 Spacer()
             }

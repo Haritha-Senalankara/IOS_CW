@@ -46,7 +46,7 @@ struct Wishlist: View {
             .padding(.top, 50)
             .padding(.bottom, 10)
             
-
+            Spacer()
             
             // Product Listings (2 Columns)
             ScrollView {

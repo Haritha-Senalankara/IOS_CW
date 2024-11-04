@@ -15,7 +15,8 @@ struct Login_or_Signup: View {
                 Image("App Logo") // Make sure this matches the image in your assets
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
+                    .frame(width: 133, height: 121)
+                    .padding(.top,40)
                 
                 Text("Login or Sign Up")
                     .font(.custom("Heebo-Bold", size: 26))
@@ -23,10 +24,11 @@ struct Login_or_Signup: View {
                     .foregroundColor(Color(hex: "#102A36"))
                 
                 Text("Log in or sign up to track your favorite products, set price alerts and unlock many features.")
-                    .font(.custom("Heebo-Regular", size: 16))
+                    .font(.custom("Heebo-Regular", size: 14))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 40)
+                    .padding(.top,20)
                 
                 Spacer()
                 
@@ -40,7 +42,7 @@ struct Login_or_Signup: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                             Text("Continue with Apple")
-                                .font(.custom("Heebo-Bold", size: 16))
+                                .font(.custom("Heebo-Bold", size: 17))
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -59,7 +61,7 @@ struct Login_or_Signup: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                             Text("Continue with Google")
-                                .font(.custom("Heebo-Bold", size: 16))
+                                .font(.custom("Heebo-Bold", size: 17))
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -80,7 +82,7 @@ struct Login_or_Signup: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                             Text("Continue with Email")
-                                .font(.custom("Heebo-Bold", size: 16))
+                                .font(.custom("Heebo-Bold", size: 17))
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -92,7 +94,7 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                 }
-                
+                .padding(.bottom,110)
                 Button(action: {
                     // Skip action
                 }) {
