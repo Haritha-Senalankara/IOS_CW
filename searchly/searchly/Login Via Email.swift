@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct Login_Via_Email: View {
     @State private var username: String = ""
         @State private var password: String = ""
+    @State private var errorMessage: String = ""
+        @State private var showAlert = false
 
         var body: some View {
             VStack(spacing: 20) {
@@ -93,17 +96,22 @@ struct Login_Via_Email: View {
                     }
                 }
                 Button(action: {
-                    // Login action
-                }) {
-                    Text("Login")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(hex: "#F2A213"))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .padding(.horizontal, 30)
-                .padding(.top, 20)
+                                login()
+                            }) {
+                                Text("Login")
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color(hex: "#F2A213"))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                            }
+                            .padding(.horizontal, 30)
+                            .padding(.top, 20)
+                            .alert(isPresented: $showAlert) {
+                                Alert(title: Text("Login"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                            }
+                
+                
 //                Spacer().frame(height:90.0)
                 Button(action: {
                     // Sign up action
@@ -119,6 +127,28 @@ struct Login_Via_Email: View {
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
+        }
+    
+    private func login() {
+            // Basic validation
+            guard !username.isEmpty, !password.isEmpty else {
+                errorMessage = "Please fill in both email and password."
+                showAlert = true
+                return
+            }
+            
+            // Attempt to sign in with Firebase
+            Auth.auth().signIn(withEmail: username, password: password) { authResult, error in
+                if let error = error {
+                    errorMessage = error.localizedDescription
+                    showAlert = true
+                    return
+                }
+                
+                // Successfully signed in
+                errorMessage = "Login Successful!"
+                showAlert = true
+            }
         }
 }
 

@@ -6,13 +6,15 @@
 //
 
 import SwiftUI
-
+import FirebaseAuth
 struct Signup_Via_Email: View {
     @State private var email: String = ""
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
+    @State private var errorMessage: String = ""
+    @State private var showAlert = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -46,24 +48,67 @@ struct Signup_Via_Email: View {
             .padding(.horizontal, 30)
             
             Button(action: {
-                // Sign up action
-            }) {
-                Text("Sign Up")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(hex: "#F2A213"))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
-            .padding(.horizontal, 30)
-            .padding(.top, 20)
+                            signUp()
+                        }) {
+                            Text("Sign Up")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color(hex: "#F2A213"))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                        .padding(.horizontal, 30)
+                        .padding(.top, 20)
+                        .alert(isPresented: $showAlert) {
+                            Alert(title: Text("Sign Up"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                        }
             
             Spacer()
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
     }
+    
+    private func signUp() {
+            // Validate fields
+            guard !email.isEmpty, !firstName.isEmpty, !lastName.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
+                errorMessage = "Please fill out all fields."
+                showAlert = true
+                return
+            }
+            
+            guard password == confirmPassword else {
+                errorMessage = "Passwords do not match."
+                showAlert = true
+                return
+            }
+            
+            // Create a new user with Firebase Authentication
+            Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+                if let error = error {
+                    errorMessage = "Error: \(error.localizedDescription)"
+                    showAlert = true
+                    return
+                }
+                
+                // Optional: Update user profile with display name
+                if let user = authResult?.user {
+                    let changeRequest = user.createProfileChangeRequest()
+                    changeRequest.displayName = "\(firstName) \(lastName)"
+                    changeRequest.commitChanges { error in
+                        if let error = error {
+                            errorMessage = "Error updating profile: \(error.localizedDescription)"
+                            showAlert = true
+                        } else {
+                            errorMessage = "Sign Up Successful!"
+                            showAlert = true
+                        }
+                    }
+                }
+            }
+        }
 }
+
 
 // Custom TextField Component
 struct CustomTextField: View {
@@ -135,7 +180,6 @@ struct CustomSecureField: View {
 //        self.init(red: red, green: green, blue: blue)
 //    }
 //}
-
 
 #Preview {
     Signup_Via_Email()

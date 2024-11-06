@@ -6,12 +6,19 @@
 //
 
 import SwiftUI
+import Firebase
 
 @main
 struct searchlyApp: App {
+    
+    init(){
+        FirebaseApp.configure()
+        print("Config firebase")
+    }
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Login_or_Signup()
+            
         }
     }
 }

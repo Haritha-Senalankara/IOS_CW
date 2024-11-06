@@ -6,8 +6,13 @@
 //
 
 import SwiftUI
+import FirebaseAuth
+import GoogleSignIn
 
 struct Login_or_Signup: View {
+    @State private var errorMessage: String = ""
+        @State private var showAlert = false
+    
     var body: some View {
             VStack(spacing: 20) {
                 Spacer()
@@ -53,25 +58,28 @@ struct Login_or_Signup: View {
                     .padding(.horizontal, 30)
                     
                     Button(action: {
-                        // Google login action
-                    }) {
-                        HStack {
-                            Image("Google Logo")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                            Text("Continue with Google")
-                                .font(.custom("Heebo-Bold", size: 17))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.black, lineWidth: 1)
-                        )
-                        .foregroundColor(Color.black)
-                    }
-                    .padding(.horizontal, 30)
+                                        signInWithGoogle()
+                                    }) {
+                                        HStack {
+                                            Image("Google Logo")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 20, height: 20)
+                                            Text("Continue with Google")
+                                                .font(.custom("Heebo-Bold", size: 17))
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.black, lineWidth: 1)
+                                        )
+                                        .foregroundColor(Color.black)
+                                    }
+                                    .padding(.horizontal, 30)
+                                    .alert(isPresented: $showAlert) {
+                                        Alert(title: Text("Google Sign-In"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                                    }
                     
                     Button(action: {
                         // Email login action
@@ -109,6 +117,31 @@ struct Login_or_Signup: View {
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
         }
+    func signInWithGoogle() {
+        let provider = OAuthProvider(providerID: "google.com")
+        provider.getCredentialWith(nil) { credential, error in
+            if let error = error {
+                self.errorMessage = "Error during Google Sign-In: \(error.localizedDescription)"
+                self.showAlert = true
+                print(self.errorMessage)
+                return
+            }
+            
+            if let credential = credential {
+                Auth.auth().signIn(with: credential) { authResult, error in
+                    if let error = error {
+                        self.errorMessage = "Firebase Sign-In error: \(error.localizedDescription)"
+                        self.showAlert = true
+                        print(self.errorMessage)
+                    } else {
+                        self.errorMessage = "Google Sign-In successful!"
+                        self.showAlert = true
+                        print("Google Sign-In successful!")
+                    }
+                }
+            }
+        }
+    }
 }
 
 
