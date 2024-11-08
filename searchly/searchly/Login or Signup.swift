@@ -8,6 +8,7 @@
 import SwiftUI
 import FirebaseAuth
 import GoogleSignIn
+import GoogleSignInSwift
 
 struct Login_or_Signup: View {
     @State private var errorMessage: String = ""
@@ -58,28 +59,28 @@ struct Login_or_Signup: View {
                     .padding(.horizontal, 30)
                     
                     Button(action: {
-                                        signInWithGoogle()
-                                    }) {
-                                        HStack {
-                                            Image("Google Logo")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 20, height: 20)
-                                            Text("Continue with Google")
-                                                .font(.custom("Heebo-Bold", size: 17))
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.black, lineWidth: 1)
-                                        )
-                                        .foregroundColor(Color.black)
-                                    }
-                                    .padding(.horizontal, 30)
-                                    .alert(isPresented: $showAlert) {
-                                        Alert(title: Text("Google Sign-In"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
-                                    }
+                        signInWithGoogle()
+                    }) {
+                        HStack {
+                            Image("Google Logo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                            Text("Continue with Google")
+                                .font(.custom("Heebo-Bold", size: 17))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.black, lineWidth: 1)
+                        )
+                        .foregroundColor(Color.black)
+                    }
+                    .padding(.horizontal, 30)
+                    .alert(isPresented: $showAlert) {
+                        Alert(title: Text("Google Sign-In"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                    }
                     
                     Button(action: {
                         // Email login action
@@ -118,26 +119,33 @@ struct Login_or_Signup: View {
             .edgesIgnoringSafeArea(.all)
         }
     func signInWithGoogle() {
-        let provider = OAuthProvider(providerID: "google.com")
-        provider.getCredentialWith(nil) { credential, error in
+        guard let presentingViewController = UIApplication.shared.windows.first?.rootViewController else {
+            self.errorMessage = "Unable to access root view controller."
+            self.showAlert = true
+            return
+        }
+
+        GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
             if let error = error {
-                self.errorMessage = "Error during Google Sign-In: \(error.localizedDescription)"
+                self.errorMessage = "Google Sign-In failed: \(error.localizedDescription)"
                 self.showAlert = true
-                print(self.errorMessage)
                 return
             }
-            
-            if let credential = credential {
-                Auth.auth().signIn(with: credential) { authResult, error in
-                    if let error = error {
-                        self.errorMessage = "Firebase Sign-In error: \(error.localizedDescription)"
-                        self.showAlert = true
-                        print(self.errorMessage)
-                    } else {
-                        self.errorMessage = "Google Sign-In successful!"
-                        self.showAlert = true
-                        print("Google Sign-In successful!")
-                    }
+
+            guard let idToken = result?.user.idToken?.tokenString else {
+                self.errorMessage = "Unable to fetch Google ID token."
+                self.showAlert = true
+                return
+            }
+
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result?.user.accessToken.tokenString ?? "")
+            Auth.auth().signIn(with: credential) { authResult, error in
+                if let error = error {
+                    self.errorMessage = "Firebase Sign-In failed: \(error.localizedDescription)"
+                    self.showAlert = true
+                } else {
+                    self.errorMessage = "Google Sign-In successful!"
+                    self.showAlert = true
                 }
             }
         }

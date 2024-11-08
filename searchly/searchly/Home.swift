@@ -6,14 +6,70 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
+
+struct Products: Identifiable {
+    var id: String
+    var name: String
+    var price: Double
+    var siteName: String
+    var likes: Int
+    var dislikes: Int
+    var rating: Double
+    var categories: [String]
+    var imageName: String // Includes fallback for missing images
+}
+
+// MARK: - Product ViewModel
+class ProductViewModel: ObservableObject {
+    @Published var products: [Products] = []
+    
+    private let db = Firestore.firestore()
+    
+    func fetchProducts() {
+        db.collection("products").getDocuments { snapshot, error in
+            if let error = error {
+                print("Error fetching products: \(error)")
+                return
+            }
+
+            self.products = snapshot?.documents.compactMap { document in
+                let data = document.data()
+                guard let name = data["name"] as? String,
+                      let price = data["price"] as? Double,
+                      let likes = data["likes"] as? Int,
+                      let dislikes = data["dislikes"] as? Int,
+                      let rating = data["rating"] as? Double,
+                      let categories = data["categories"] as? [String] else {
+                    return nil
+                }
+
+                let imageName = data["imageName"] as? String ?? "img-1" // Fallback to default image
+
+                return Products(
+                    id: document.documentID,
+                    name: name,
+                    price: price,
+                    siteName: "Doctormobile.lk", // Placeholder for missing siteName
+                    likes: likes,
+                    dislikes: dislikes,
+                    rating: rating,
+                    categories: categories,
+                    imageName: imageName
+                )
+            } ?? []
+        }
+    }
+}
 
 struct Home: View {
+    @StateObject private var viewModel = ProductViewModel()
     @State private var showPriceFilter = false
     @State private var selectedPrice: Double = 350000 // Default value
     
     var body: some View {
         VStack(spacing: 0) {
-            // Top Navigation Bar with padding to avoid camera area
+            // Top Navigation Bar
             HStack {
                 HStack {
                     Image("search")
@@ -44,10 +100,10 @@ struct Home: View {
                     .frame(width: 20, height: 20)
                     .padding(.trailing, 20)
             }
-            .padding(.top, 50) // Padding to avoid the camera area
+            .padding(.top, 50)
             .padding(.bottom, 10)
             
-            // Filter Buttons (3 Columns)
+            // Filter Buttons
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                 FilterButton(iconName: "location-icon", title: "Location")
                 FilterButton(iconName: "price-icon", title: "Price") {
@@ -63,14 +119,19 @@ struct Home: View {
             
             Divider()
             
-            // Product Listings (2 Columns)
+            // Product Listings
             ScrollView {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                    ProductCard(imageName: "img-1", name: "Apple iPhone 15 Pro 128GB", siteName: "Doctormobile.lk", price: "Rs.328,200.00", likes: "1.1k", rating: "5")
-                    ProductCard(imageName: "img-3", name: "Apple iPhone 15 Pro 128GB", siteName: "Appleasia.lk", price: "Rs.329,000.00", likes: "1.0k", rating: "5")
-                    ProductCard(imageName: "img-1", name: "Apple iPhone 15 Pro 128GB", siteName: "Doctormobile.lk", price: "Rs.328,200.00", likes: "1.1k", rating: "5")
-                    ProductCard(imageName: "img-3", name: "Apple iPhone 15 Pro 128GB", siteName: "Appleasia.lk", price: "Rs.329,000.00", likes: "1.0k", rating: "5")
-                    // Add more products as needed
+                    ForEach(viewModel.products) { product in
+                        ProductCard(
+                            imageName: product.imageName,
+                            name: product.name,
+                            siteName: product.siteName,
+                            price: "Rs.\(Int(product.price))",
+                            likes: "\(product.likes)",
+                            rating: "\(product.rating)"
+                        )
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
@@ -87,15 +148,18 @@ struct Home: View {
             }
             .padding(.horizontal, 40)
             .padding(.vertical, 10)
-            .background(Color(hex: "#102A36")) // Dark color as per style guide
+            .background(Color(hex: "#102A36"))
             .foregroundColor(.white)
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 30) // Padding to ensure it doesn't overlap with the home indicator area
+            .padding(.bottom, 30)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
         .sheet(isPresented: $showPriceFilter) {
             PriceFilterView(selectedPrice: $selectedPrice, isPresented: $showPriceFilter)
+        }
+        .onAppear {
+            viewModel.fetchProducts()
         }
     }
 }
@@ -105,7 +169,6 @@ struct PriceFilterView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-
         VStack(spacing: 20) {
             Text("Price \(Int(selectedPrice))")
                 .font(.custom("Heebo-Regular", size: 18))
@@ -116,7 +179,6 @@ struct PriceFilterView: View {
                 .padding(.horizontal, 20)
             
             Button(action: {
-                // Apply action
                 isPresented = false
             }) {
                 Text("Apply")
@@ -133,66 +195,34 @@ struct PriceFilterView: View {
         .padding(.bottom, 30)
         .background(Color.white)
         .cornerRadius(12)
-        
     }
 }
 
-/**
- 
- // Reusable Filter Button Component
- struct FilterButton: View {
-     var iconName: String
-     var title: String
-     var action: (() -> Void)? = nil
-
-     var body: some View {
-         Button(action: {
-             action?()
-         }) {
-             HStack {
-                 Image(iconName)
-                     .resizable()
-                     .scaledToFit()
-                     .frame(width: 16, height: 16)
-                 Text(title)
-                     .font(.custom("Heebo-Regular", size: 12))
-             }
-             .padding(10)
-             .frame(maxWidth: .infinity)
-             .background(Color(hex: "#F7F7F7"))
-             .cornerRadius(8)
-         }
-     }
- }
-
- */
-
-// Reusable Filter Button Component
+// MARK: - FilterButton
 struct FilterButton: View {
     var iconName: String
     var title: String
     var action: (() -> Void)? = nil
     var body: some View {
-        Button(action:{action?()})
-        
-        {
-        HStack {
-            Image(iconName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 16, height: 16)
-            Text(title)
-                .font(.custom("Heebo-Regular", size: 12))
-                .foregroundStyle(.black)
+        Button(action: { action?() }) {
+            HStack {
+                Image(iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                Text(title)
+                    .font(.custom("Heebo-Regular", size: 12))
+                    .foregroundStyle(.black)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .background(Color(hex: "#F7F7F7"))
+            .cornerRadius(8)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity)
-        .background(Color(hex: "#F7F7F7"))
-        .cornerRadius(8)
-    }}
+    }
 }
 
-// Reusable Product Card Component
+// MARK: - ProductCard
 struct ProductCard: View {
     var imageName: String
     var name: String
@@ -214,21 +244,15 @@ struct ProductCard: View {
                 .foregroundColor(.black)
                 .lineLimit(2)
             
-            HStack(){
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height:20)
-                Text(siteName)
-                    .font(.custom("Heebo-Regular", size: 12))
-                    .foregroundColor(.gray)
-            }
+            Text(siteName)
+                .font(.custom("Heebo-Regular", size: 12))
+                .foregroundColor(.gray)
             
             Text(price)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(Color(hex: "#F2A213"))
             
-            HStack() {
+            HStack {
                 HStack(spacing: 5) {
                     Image("like-icon")
                         .resizable()
@@ -237,7 +261,7 @@ struct ProductCard: View {
                     Text(likes)
                         .font(.custom("Heebo-Regular", size: 12))
                 }
-                .frame(width: 60,height: 30)
+                .frame(width: 60, height: 30)
                 .background(Color.white)
                 .cornerRadius(8)
                 .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
@@ -247,11 +271,10 @@ struct ProductCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12.9, height: 15)
-                        
                     Text(rating)
                         .font(.custom("Heebo-Regular", size: 12))
                 }
-                .frame(width: 60,height: 30)
+                .frame(width: 60, height: 30)
                 .background(Color.white)
                 .cornerRadius(8)
                 .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
@@ -264,7 +287,7 @@ struct ProductCard: View {
     }
 }
 
-// Reusable Bottom Navigation Item Component
+// MARK: - BottomNavItem
 struct BottomNavItem: View {
     var iconName: String
     var title: String
@@ -275,7 +298,7 @@ struct BottomNavItem: View {
             Image(iconName)
                 .resizable()
                 .scaledToFit()
-                .frame(width: isActive ? 24 : 20, height: isActive ? 24 : 20) // Adjusted size for active/inactive state
+                .frame(width: isActive ? 24 : 20, height: isActive ? 24 : 20)
                 .foregroundColor(isActive ? Color(hex: "#F2A213") : .white)
             Text(title)
                 .font(.custom("Heebo-Regular", size: 10))
@@ -284,25 +307,6 @@ struct BottomNavItem: View {
         }
     }
 }
-
-// Utility to create a color from hex value
-//extension Color {
-//    init(hexValue: String) {
-//        let scanner = Scanner(string: hex)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
-
-
 
 #Preview {
     Home()
