@@ -17,7 +17,7 @@ struct searchlyApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            Login_or_Signup()
+            Splash_View()
             
         }
     }

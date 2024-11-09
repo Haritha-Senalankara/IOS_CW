@@ -9,12 +9,17 @@ import SwiftUI
 import FirebaseAuth
 import GoogleSignIn
 import GoogleSignInSwift
+import FirebaseFirestore
 
 struct Login_or_Signup: View {
     @State private var errorMessage: String = ""
-        @State private var showAlert = false
+    @State private var showAlert = false
+    @State private var navigateToEmailLogin = false // State for navigation to email login
+    private let db = Firestore.firestore() // Firestore reference
+    @State private var navigateToHome = false
     
     var body: some View {
+        NavigationView {
             VStack(spacing: 20) {
                 Spacer()
                 
@@ -22,7 +27,7 @@ struct Login_or_Signup: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 133, height: 121)
-                    .padding(.top,40)
+                    .padding(.top, 40)
                 
                 Text("Login or Sign Up")
                     .font(.custom("Heebo-Bold", size: 26))
@@ -34,7 +39,7 @@ struct Login_or_Signup: View {
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
                     .padding(.horizontal, 40)
-                    .padding(.top,20)
+                    .padding(.top, 20)
                 
                 Spacer()
                 
@@ -83,7 +88,7 @@ struct Login_or_Signup: View {
                     }
                     
                     Button(action: {
-                        // Email login action
+                        navigateToEmailLogin = true // Navigate to email login
                     }) {
                         HStack {
                             Image("Email Logo")
@@ -103,7 +108,8 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                 }
-                .padding(.bottom,110)
+                .padding(.bottom, 110)
+                
                 Button(action: {
                     // Skip action
                 }) {
@@ -117,39 +123,96 @@ struct Login_or_Signup: View {
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
+            .background(
+                NavigationLink(
+                    destination: Login_Via_Email(), // Navigate to the Login_Via_Email view
+                    isActive: $navigateToEmailLogin
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+                
+                
+            )
+            .background(
+                NavigationLink(
+                    destination: Home(), // Navigate to the Login_Via_Email view
+                    isActive: $navigateToHome
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            )
+            
         }
+        .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
+        .navigationBarBackButtonHidden(true)
+
+    }
+
     func signInWithGoogle() {
         guard let presentingViewController = UIApplication.shared.windows.first?.rootViewController else {
             self.errorMessage = "Unable to access root view controller."
             self.showAlert = true
             return
         }
-
+        
         GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
             if let error = error {
                 self.errorMessage = "Google Sign-In failed: \(error.localizedDescription)"
                 self.showAlert = true
                 return
             }
-
-            guard let idToken = result?.user.idToken?.tokenString else {
+            
+            guard let user = result?.user,
+                  let idToken = user.idToken?.tokenString else {
                 self.errorMessage = "Unable to fetch Google ID token."
                 self.showAlert = true
                 return
             }
-
-            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result?.user.accessToken.tokenString ?? "")
+            
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
             Auth.auth().signIn(with: credential) { authResult, error in
                 if let error = error {
                     self.errorMessage = "Firebase Sign-In failed: \(error.localizedDescription)"
                     self.showAlert = true
-                } else {
-                    self.errorMessage = "Google Sign-In successful!"
-                    self.showAlert = true
+                    return
+                }
+                
+                // Successfully signed in
+                if let authUser = authResult?.user {
+                    // Save user ID locally
+                    UserDefaults.standard.set(authUser.uid, forKey: "userID")
+                    
+                    // Save user info to Firestore
+                    saveUserToFirestore(
+                        userID: authUser.uid,
+                        email: authUser.email ?? "Unknown Email",
+                        firstName: user.profile?.givenName ?? "Unknown",
+                        lastName: user.profile?.familyName ?? "Unknown",
+                        profileImage: user.profile?.imageURL(withDimension: 200)?.absoluteString ?? ""
+                    )
+                    
+                    navigateToHome = true
                 }
             }
         }
-    }
+        func saveUserToFirestore(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
+            let userData: [String: Any] = [
+                "email_address": email,
+                "name": firstName + " " + lastName,
+                "profile_image": profileImage,
+                "created_at": Timestamp()
+            ]
+            
+            db.collection("customers").document(userID).setData(userData) { error in
+                if let error = error {
+                    print("Error saving user data: \(error.localizedDescription)")
+                } else {
+                    print("User data saved successfully.")
+                }
+            }
+        }}
 }
 
 

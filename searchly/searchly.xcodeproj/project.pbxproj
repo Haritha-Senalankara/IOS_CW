@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		863C0DBF2CCE13EB0014D531 /* searchlyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863C0DBE2CCE13EB0014D531 /* searchlyApp.swift */; };
-		863C0DC12CCE13EB0014D531 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863C0DC02CCE13EB0014D531 /* ContentView.swift */; };
 		863C0DC32CCE13EC0014D531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 863C0DC22CCE13EC0014D531 /* Assets.xcassets */; };
 		863C0DC62CCE13EC0014D531 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 863C0DC52CCE13EC0014D531 /* Preview Assets.xcassets */; };
 		863C0DD02CCE13EC0014D531 /* searchlyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863C0DCF2CCE13EC0014D531 /* searchlyTests.swift */; };
@@ -62,7 +61,6 @@
 /* Begin PBXFileReference section */
 		863C0DBB2CCE13EB0014D531 /* searchly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = searchly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		863C0DBE2CCE13EB0014D531 /* searchlyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = searchlyApp.swift; sourceTree = "<group>"; };
-		863C0DC02CCE13EB0014D531 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		863C0DC22CCE13EC0014D531 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		863C0DC52CCE13EC0014D531 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		863C0DCB2CCE13EC0014D531 /* searchlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = searchlyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -151,7 +149,6 @@
 				86B939642CDB807300EE2F09 /* Info.plist */,
 				86B939622CDB7FFF00EE2F09 /* GoogleService-Info.plist */,
 				863C0DBE2CCE13EB0014D531 /* searchlyApp.swift */,
-				863C0DC02CCE13EB0014D531 /* ContentView.swift */,
 				863C0DEC2CCE188A0014D531 /* Splash View.swift */,
 				863C0DEE2CCE18B10014D531 /* onboarding.swift */,
 				863C0DF02CCE18C80014D531 /* Login or Signup.swift */,
@@ -360,7 +357,6 @@
 				863C0DED2CCE188A0014D531 /* Splash View.swift in Sources */,
 				863C0E012CCE19560014D531 /* Home.swift in Sources */,
 				863C0E072CCE199F0014D531 /* Seller Profile.swift in Sources */,
-				863C0DC12CCE13EB0014D531 /* ContentView.swift in Sources */,
 				863C0DF92CCE19190014D531 /* Forgot Password Step 2.swift in Sources */,
 				863C0E0B2CCE19D30014D531 /* Customer Profile.swift in Sources */,
 				863C0E052CCE19870014D531 /* Settings.swift in Sources */,

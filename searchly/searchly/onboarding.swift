@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct onboarding: View {
+    @State private var navigateToLoginSignup = false // State to trigger navigation
+    
     var body: some View {
+        NavigationView {
             VStack(spacing: 20) {
                 Spacer()
                 
@@ -22,20 +25,20 @@ struct onboarding: View {
                     .font(.custom("Heebo-Bold", size: 26))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#102A36"))
-                    .padding(.top,24)
+                    .padding(.top, 24)
                 
                 Text("Find the best deals online and locally. Filter products by price, location, and ratings to ensure you get the best value. Connect directly with vendors for quick and easy access to great offers.")
                     .font(.custom("Heebo-Regular", size: 14))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
                     .padding(.horizontal, 20)
-                    .padding(.top,20)
+                    .padding(.top, 20)
                 
                 Spacer()
                 
                 VStack(spacing: 28) {
                     Button(action: {
-                        // Sign In action
+                        navigateToLoginSignup = true // Trigger navigation
                     }) {
                         Text("Sign In")
                             .frame(maxWidth: .infinity)
@@ -47,7 +50,7 @@ struct onboarding: View {
                     .padding(.horizontal, 30)
                     
                     Button(action: {
-                        // Create a profile action
+                        navigateToLoginSignup = true // Trigger navigation
                     }) {
                         Text("Create A Profile")
                             .frame(maxWidth: .infinity)
@@ -59,25 +62,36 @@ struct onboarding: View {
                             .foregroundColor(Color(hex: "#F2A213"))
                     }
                     .padding(.horizontal, 30)
-//                    .padding(.top,)
                 }
-                .padding(.top,50)
+                .padding(.top, 50)
                 
                 Button(action: {
-                    // Skip action
+                    // Skip action (you can define behavior here if needed)
                 }) {
                     Text("I'll do it later")
                         .font(.custom("Heebo-Regular", size: 14))
                         .foregroundColor(Color(hex: "#102A36"))
                 }
                 .padding(.top, 120)
-                .padding(.bottom,30)
+                .padding(.bottom, 30)
                 
                 Spacer()
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
+            .background(
+                NavigationLink(
+                    destination: Login_or_Signup(), // Navigate to Login_or_Signup view
+                    isActive: $navigateToLoginSignup
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            )
         }
+        .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
+        .navigationBarBackButtonHidden(true)
+    }
 }
 
 //extension Color {
