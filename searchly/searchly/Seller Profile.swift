@@ -1,13 +1,30 @@
 //
-//  Seller Profile.swift
+//  Seller_Profile.swift
 //  searchly
 //
 //  Created by cobsccompy4231p-007 on 2024-10-27.
 //
 
 import SwiftUI
+import FirebaseFirestore
+import MapKit
 
 struct Seller_Profile: View {
+    @State private var sellerName: String = "Loading..."
+    @State private var sellerLikes: String = "0 Likes"
+    @State private var sellerDescription: String = "Loading seller description..."
+    @State private var sellerEmail: String = "Loading email..."
+    @State private var sellerLocation: CLLocationCoordinate2D? = nil
+    @State private var sellerWebsite: String = ""
+    @State private var contactMethods: [String] = []
+    @State private var apps: [String] = []
+    @State private var phoneNumber: String = "Unavailable"
+    @State private var whatsappNumber: String = "Unavailable"
+    @State private var seller_profile_img_link: String = "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
+
+    private let db = Firestore.firestore()
+    let sellerID: String
+
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
@@ -41,19 +58,31 @@ struct Seller_Profile: View {
             .padding(.bottom, 10)
             
             // Seller Logo
-            Image(systemName: "person.circle.fill") // Placeholder for seller logo
-                .resizable()
-                .scaledToFit()
-                .frame(width: 100, height: 100)
-                .padding(.top, 10)
-            
+            AsyncImage(url: URL(string: seller_profile_img_link)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 100, height: 100)
+                    .clipped()
+                    .cornerRadius(100)
+            } placeholder: {
+                Color.gray
+                    .frame(width: 100, height: 100)
+                    .cornerRadius(10)
+            }
+//            Image(systemName: "person.circle.fill") // Placeholder for seller logo
+//                .resizable()
+//                .scaledToFit()
+//                .frame(width: 100, height: 100)
+//                .padding(.top, 10)
+//            
             // Seller Information
-            Text("Appleasia.lk")
+            Text(sellerName)
                 .font(.custom("Heebo-Bold", size: 20))
                 .foregroundColor(Color(hexValue: "#102A36"))
                 .padding(.top, 5)
             
-            Text("12.0K Likes")
+            Text(sellerLikes)
                 .font(.custom("Heebo-Regular", size: 14))
                 .foregroundColor(.gray)
                 .padding(.bottom, 20)
@@ -61,11 +90,23 @@ struct Seller_Profile: View {
             // Contact Buttons
             VStack(spacing: 15) {
                 HStack(spacing: 20) {
-                    ContactButton(iconName: "phone.fill", title: "Direct Call")
-                    ContactButton(iconName: "message.fill", title: "WhatsApp")
+                    ContactButton(iconName: "phone.fill", title: "Call") {
+                        if let phoneURL = URL(string: "tel://\(phoneNumber)") {
+                            UIApplication.shared.open(phoneURL)
+                        }
+                    }
+                    ContactButton(iconName: "message.fill", title: "WhatsApp") {
+                        if let whatsappURL = URL(string: "https://wa.me/\(whatsappNumber)") {
+                            UIApplication.shared.open(whatsappURL)
+                        }
+                    }
                 }
                 HStack(spacing: 20) {
-                    ContactButton(iconName: "globe", title: "Website")
+                    ContactButton(iconName: "globe", title: "Website") {
+                        if let url = URL(string: sellerWebsite) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
                     ContactButton(iconName: "square.and.arrow.up", title: "Share")
                 }
             }
@@ -73,31 +114,30 @@ struct Seller_Profile: View {
             
             // Seller Description
             VStack(alignment: .leading, spacing: 10) {
-                Text("Apple Asia is the largest Apple Products Seller in Sri Lanka and we strive to bring the Apple products you love closer to you.")
+                Text(sellerDescription)
                     .font(.custom("Heebo-Regular", size: 14))
                     .foregroundColor(.gray)
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
                 
-                Text("info@appleasia.lk")
-                    .font(.custom("Heebo-Bold", size: 14))
-                    .foregroundColor(Color(hexValue: "#102A36"))
-                    .padding(.horizontal, 20)
-                
-                Text("Brand New Apple Devices…")
-                    .font(.custom("Heebo-Regular", size: 14))
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
+//                Text("Email: \(sellerEmail)")
+//                    .font(.custom("Heebo-Bold", size: 14))
+//                    .foregroundColor(Color(hexValue: "#102A36"))
+//                    .padding(.horizontal, 20)
             }
             
-            // Placeholder for Map
-            Image(systemName: "map.fill") // Placeholder map image
-                .resizable()
-                .scaledToFit()
-                .frame(height: 200)
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+            // Map
+            if let location = sellerLocation {
+                MapView(coordinate: location)
+                    .frame(height: 200)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+            } else {
+                Text("Loading map...")
+                    .font(.custom("Heebo-Regular", size: 14))
+                    .foregroundColor(.gray)
+                    .padding(.top, 20)
+            }
             
             Spacer()
             
@@ -115,10 +155,74 @@ struct Seller_Profile: View {
             .background(Color(hexValue: "#102A36")) // Dark color as per style guide
             .foregroundColor(.white)
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
+            .padding(.bottom, 20)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
+        .onAppear {
+            fetchSellerData()
+        }
+    }
+    
+    // Fetch seller data from Firestore and parse as JSON
+    private func fetchSellerData() {
+        db.collection("sellers").document(sellerID).getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching seller data: \(error)")
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                print("No seller data found for ID: \(sellerID)")
+                return
+            }
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: data, options: .prettyPrinted)
+                if let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any] {
+                    parseSellerJSON(json: json)
+                }
+            } catch {
+                print("Error serializing seller data: \(error)")
+            }
+        }
+    }
+    
+    // Parse JSON data into variables
+    private func parseSellerJSON(json: [String: Any]) {
+        DispatchQueue.main.async {
+            sellerName = json["name"] as? String ?? "Unknown Seller"
+            sellerLikes = "\(json["total_likes"] as? String ?? "") Likes"
+            sellerDescription = json["description"] as? String ?? "No description available."
+            sellerEmail = json["email"] as? String ?? "No email available."
+            sellerWebsite = json["website"] as? String ?? ""
+            phoneNumber = json["phone_number"] as? String ?? "Unavailable"
+            whatsappNumber = json["whatsapp_number"] as? String ?? "Unavailable"
+            seller_profile_img_link = json["profile_image"] as? String ?? "Unavailable"
+            
+            if let location = json["location"] as? [String: Any],
+               let lat = location["lat"] as? Double,
+               let long = location["long"] as? Double {
+                sellerLocation = CLLocationCoordinate2D(latitude: lat, longitude: long)
+            }
+            
+            contactMethods = json["contact_methods"] as? [String] ?? []
+            apps = json["apps"] as? [String] ?? []
+        }
+    }
+}
+
+// MapView Component
+struct MapView: View {
+    var coordinate: CLLocationCoordinate2D
+    
+    var body: some View {
+        Map(coordinateRegion: .constant(MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )))
+        .cornerRadius(10)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -126,10 +230,11 @@ struct Seller_Profile: View {
 struct ContactButton: View {
     var iconName: String
     var title: String
+    var action: (() -> Void)? = nil
     
     var body: some View {
         Button(action: {
-            // Contact button action
+            action?()
         }) {
             HStack {
                 Image(systemName: iconName)
@@ -149,23 +254,10 @@ struct ContactButton: View {
     }
 }
 
-//// Utility to create a color from hex value
-//extension Color {
-//    init(hexValue: String) {
-//        let scanner = Scanner(string: hexValue)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
 
-#Preview {
-    Seller_Profile()
+// Preview Provider
+struct Seller_Profile_Previews: PreviewProvider {
+    static var previews: some View {
+        Seller_Profile(sellerID: "AmfnxUhi3E3sSZGQMgXp")
+    }
 }

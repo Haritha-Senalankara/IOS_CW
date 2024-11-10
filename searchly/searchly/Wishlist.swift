@@ -6,29 +6,15 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 struct Wishlist: View {
-    // Sample data for the wishlist
-    var products = [
-        Product(image: "img-1", name: "Apple iPhone 15 Pro 128GB", storeName: "Doctormobile.lk", price: "Rs.328,200.00", likes: "1.1k", rating: "5"),
-        Product(image: "img-2", name: "Apple iPhone 15 Pro 128GB", storeName: "Appleasia.lk", price: "Rs.329,000.00", likes: "1.0k", rating: "5")
-    ]
+    @StateObject private var viewModel = WishlistViewModel()
     
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
             HStack {
-                Button(action: {
-                    // Back action
-                }) {
-                    Image(systemName: "arrow.left")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.black)
-                }
-                .padding(.leading, 20)
-                
                 Spacer()
                 
                 Image("notification-icon")
@@ -46,77 +32,176 @@ struct Wishlist: View {
             .padding(.top, 50)
             .padding(.bottom, 10)
             
-            Spacer()
+            // Title
+//            Text("My Wishlist")
+//                .font(.custom("Heebo-Bold", size: 24))
+//                .padding(.vertical, 10)
             
             // Product Listings (2 Columns)
-//            ScrollView {
-//                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-//                    ProductCard(imageName: "img-1", name: "Apple iPhone 15 Pro 128GB", siteName: "Doctormobile.lk", price: "Rs.328,200.00", likes: "1.1k", rating: "5")
-//                    ProductCard(imageName: "img-3", name: "Apple iPhone 15 Pro 128GB", siteName: "Appleasia.lk", price: "Rs.329,000.00", likes: "1.0k", rating: "5")
-//                    ProductCard(imageName: "img-1", name: "Apple iPhone 15 Pro 128GB", siteName: "Doctormobile.lk", price: "Rs.328,200.00", likes: "1.1k", rating: "5")
-//                    ProductCard(imageName: "img-3", name: "Apple iPhone 15 Pro 128GB", siteName: "Appleasia.lk", price: "Rs.329,000.00", likes: "1.0k", rating: "5")
-//                    // Add more products as needed
-//                }
-//                .padding(.horizontal, 20)
-//                .padding(.top, 10)
-//            }
-            
-            Spacer()
+            if viewModel.isLoading {
+                // Show a loading indicator while fetching data
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .padding()
+            } else if viewModel.products.isEmpty {
+                // Show a message if the wishlist is empty
+                Text("Your wishlist is empty.")
+                    .font(.custom("Heebo-Regular", size: 16))
+                    .foregroundColor(.gray)
+                    .padding()
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                        ForEach(viewModel.products) { product in
+                            NavigationLink(destination: Product_Page(productID: product.id)) {
+                                ProductCard(
+                                    imageName: product.imageName,
+                                    name: product.name,
+                                    siteName: product.siteName,
+                                    price: "Rs.\(Int(product.price))",
+                                    likes: "\(product.likes)",
+                                    rating: String(format: "%.1f", product.rating)
+                                )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                }
+            }
             
             // Bottom Navigation Bar
             Divider()
             HStack {
-                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+                NavigationLink(destination: Home()) {
+                    BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+                    }
+                
+                    //add nav here
                 Spacer()
-                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: true)
+                NavigationLink(destination: Wishlist()) {
+                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: true)
+                    }
                 Spacer()
-                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
+                NavigationLink(destination: Settings()) {
+                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
+                    }
             }
             .padding(.horizontal, 40)
             .padding(.vertical, 10)
-            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
+            .background(Color(hexValue: "#102A36"))
             .foregroundColor(.white)
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
+            .padding(.bottom, 20)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
+        .onAppear {
+            viewModel.fetchWishlistProducts()
+        }
     }
 }
 
-// Product model
-struct Product: Identifiable {
-    var id = UUID()
-    var image: String
-    var name: String
-    var storeName: String
-    var price: String
-    var likes: String
-    var rating: String
-}
-
-
-
-// Reusable component for icons with info (like and rating)
-struct IconInfoView: View {
-    var iconName: String
-    var text: String
+// MARK: - Wishlist ViewModel
+class WishlistViewModel: ObservableObject {
+    @Published var products: [Products] = []
+    @Published var isLoading: Bool = false
     
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(iconName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 14, height: 14)
-            Text(text)
-                .font(.custom("Heebo-Regular", size: 12))
-                .foregroundColor(.gray)
+    private let db = Firestore.firestore()
+    private var userID: String = ""
+    
+    func fetchWishlistProducts() {
+        guard let uid = UserDefaults.standard.string(forKey: "userID") else {
+            print("User ID not found in UserDefaults")
+            return
+        }
+        self.userID = uid
+        isLoading = true
+        
+        // Fetch fav_list from customer's document
+        db.collection("customers").document(userID).getDocument { [weak self] snapshot, error in
+            guard let self = self else { return }
+            if let error = error {
+                print("Error fetching customer data: \(error)")
+                self.isLoading = false
+                return
+            }
+            
+            guard let data = snapshot?.data(), let favList = data["fav_list"] as? [String] else {
+                print("No fav_list found for user \(self.userID)")
+                self.isLoading = false
+                return
+            }
+            
+            if favList.isEmpty {
+                DispatchQueue.main.async {
+                    self.products = []
+                    self.isLoading = false
+                }
+            } else {
+                self.fetchProducts(productIDs: favList)
+            }
+        }
+    }
+    
+    private func fetchProducts(productIDs: [String]) {
+        var fetchedProducts: [Products] = []
+        let group = DispatchGroup()
+        
+        for productID in productIDs {
+            group.enter()
+            db.collection("products").document(productID).getDocument { [weak self] snapshot, error in
+                defer { group.leave() }
+                guard let self = self else { return }
+                if let error = error {
+                    print("Error fetching product \(productID): \(error)")
+                    return
+                }
+                
+                guard let data = snapshot?.data() else {
+                    print("No data found for product \(productID)")
+                    return
+                }
+                
+                let name = data["name"] as? String ?? "Unknown Product"
+                let price = Double(data["price"] as? String ?? "0") ?? 0.0
+                let siteName = data["siteName"] as? String ?? "Unknown Seller"
+                let likes = Int(data["likes"] as? String ?? "0") ?? 0
+                let dislikes = Int(data["dislikes"] as? String ?? "0") ?? 0
+                let rating = Double(data["rating"] as? String ?? "0") ?? 0.0
+                let categories = data["categories"] as? [String] ?? []
+                let imageName = data["product_image"] as? String ?? ""
+                
+                let product = Products(
+                    id: productID,
+                    name: name,
+                    price: price,
+                    siteName: siteName,
+                    likes: likes,
+                    dislikes: dislikes,
+                    rating: rating,
+                    categories: categories,
+                    imageName: imageName,
+                    location: nil
+                )
+                
+                fetchedProducts.append(product)
+            }
+        }
+        
+        group.notify(queue: .main) {
+            self.products = fetchedProducts
+            self.isLoading = false
         }
     }
 }
 
 
 
-#Preview {
-    Wishlist()
+// Preview Provider
+struct Wishlist_Previews: PreviewProvider {
+    static var previews: some View {
+        Wishlist()
+    }
 }

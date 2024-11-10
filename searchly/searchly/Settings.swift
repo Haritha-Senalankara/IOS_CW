@@ -120,11 +120,19 @@ struct Settings: View {
             // Bottom Navigation Bar
             Divider()
             HStack {
-                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+                NavigationLink(destination: Home()) {
+                    BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+                    }
+                
+                    //add nav here
                 Spacer()
-                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
+                NavigationLink(destination: Wishlist()) {
+                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
+                    }
                 Spacer()
-                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
+                NavigationLink(destination: Settings()) {
+                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
+                    }
             }
             .padding(.horizontal, 40)
             .padding(.vertical, 10)
@@ -138,22 +146,6 @@ struct Settings: View {
     }
 }
 
-// Utility to create a color from hex value
-//extension Color {
-//    init(hexValue: String) {
-//        let scanner = Scanner(string: hexValue)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
 
 
 #Preview {

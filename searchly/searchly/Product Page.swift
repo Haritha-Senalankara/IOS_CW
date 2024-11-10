@@ -1,5 +1,5 @@
 //
-//  Product Page.swift
+//  Product_Page.swift
 //  searchly
 //
 //  Created by cobsccompy4231p-007 on 2024-10-27.
@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FirebaseFirestore
+import EventKit
 
 struct Product_Page: View {
     @State private var isLoading: Bool = true // Show loading indicator
@@ -26,26 +27,22 @@ struct Product_Page: View {
     @State private var seller_profile_img_link: String = "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
     @State private var product_price: Int = 120000
 
-    
     @State private var otherProducts: [Products] = []
+
+    // New state variables for favorite and like/dislike functionality
+    @State private var isFavorite: Bool = false
+    @State private var hasLiked: Bool = false
+    @State private var hasDisliked: Bool = false
+    @State private var userID: String = ""
     
+    private let eventStore = EKEventStore()
+
     var body: some View {
         ZStack {
             ScrollView {
                 VStack(spacing: 0) {
                     // Top Navigation Bar
                     HStack {
-//                        Button(action: {
-//                            // Back action
-//                        }) {
-//                            Image(systemName: "arrow.left")
-//                                .resizable()
-//                                .scaledToFit()
-//                                .frame(width: 20, height: 20)
-//                                .foregroundColor(.black)
-//                        }
-//                        .padding(.leading, 20)
-                        
                         Spacer()
                         
                         Image("notification-icon")
@@ -85,10 +82,14 @@ struct Product_Page: View {
                             
                             Spacer()
                             
-                            Image("heart-icon-only-border")
+                            // Heart Icon with tap gesture
+                            Image(isFavorite ? "heart-icon-filled" : "heart-icon-only-border")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 24, height: 24)
+                                .onTapGesture {
+                                    toggleFavorite()
+                                }
                         }
                         
                         HStack {
@@ -125,11 +126,24 @@ struct Product_Page: View {
                         // Horizontal Scroll for Action Buttons
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                IconActionButton(iconName: "like-icon-product", label: String(product_likes))
-                                IconActionButton(iconName: "dislike-icon-product", label: String(product_dislikes))
+                                // Like Button with tap gesture
+                                IconActionButton(iconName: hasLiked ? "like-icon-product-active" : "like-icon-product", label: String(product_likes))
+                                    .onTapGesture {
+                                        toggleLike()
+                                    }
+                                
+                                // Dislike Button with tap gesture
+                                IconActionButton(iconName: hasDisliked ? "dislike-icon-product-active" : "dislike-icon-product", label: String(product_dislikes))
+                                    .onTapGesture {
+                                        toggleDislike()
+                                    }
+                                
                                 IconActionButton(iconName: "share-icon-product", label: "Share")
                                 IconActionButton(iconName: "star-icon-product", label: String(product_ratings))
                                 IconActionButton(iconName: "calander-icon-product", label: "Remind")
+                                    .onTapGesture {
+                                        addReminder()
+                                    }
                             }
                             .padding(.top, 5)
                         }
@@ -158,21 +172,20 @@ struct Product_Page: View {
                     
                     // Other Product Listings
                     VStack(alignment: .leading, spacing: 10) {
-//                        Text("Other Products")
-//                            .font(.custom("Heebo-Bold", size: 18))
-//                            .padding(.horizontal, 20)
-                        
+                        // You can add a title here if you want
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
                                 ForEach(otherProducts, id: \.id) { product in
-                                    ProductCard(
-                                        imageName: product.imageName,
-                                        name: product.name,
-                                        siteName: product.siteName,
-                                        price: "Rs.\(product.price)",
-                                        likes: "\(product.likes)",
-                                        rating: "\(product.rating)"
-                                    )
+                                    NavigationLink(destination: Product_Page(productID: product.id)) {
+                                        ProductCard(
+                                            imageName: product.imageName,
+                                            name: product.name,
+                                            siteName: product.siteName,
+                                            price: "Rs.\(Int(product.price))",
+                                            likes: "\(product.likes)",
+                                            rating: String(format: "%.1f", product.rating)
+                                        )
+                                    }
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -184,8 +197,72 @@ struct Product_Page: View {
             .edgesIgnoringSafeArea(.all)
         }
         .onAppear {
+            // Get user ID from UserDefaults
+            if let uid = UserDefaults.standard.string(forKey: "userID") {
+                self.userID = uid
+                checkIfFavorite()
+                checkUserInteraction()
+            } else {
+                print("User ID not found in UserDefaults")
+            }
+            
             fetchProductDetails()
             fetchOtherProducts()
+        }
+    }
+    
+    private func addReminder() {
+        // Request access to the calendar
+        eventStore.requestAccess(to: .event) { granted, error in
+            if let error = error {
+                print("Error requesting calendar access: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    showAlert(title: "Error", message: "An error occurred while requesting access to your calendar.")
+                }
+                return
+            }
+            
+            if granted {
+                DispatchQueue.main.async {
+                    createEvent()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    showAlert(
+                        title: "Permission Denied",
+                        message: "Calendar access is required to add a reminder. Please enable it in the Settings app."
+                    )
+                }
+            }
+        }
+    }
+
+    // Create the event
+    private func createEvent() {
+        let event = EKEvent(eventStore: self.eventStore)
+        event.title = self.product_name
+        event.notes = self.product_desc
+        event.startDate = Date()
+        event.endDate = Date().addingTimeInterval(3600) // 1-hour duration
+        event.calendar = self.eventStore.defaultCalendarForNewEvents
+
+        do {
+            try self.eventStore.save(event, span: .thisEvent)
+            print("Event added to calendar")
+            showAlert(title: "Reminder Added", message: "A reminder for \(self.product_name) has been added to your calendar.")
+        } catch {
+            print("Error saving event to calendar: \(error.localizedDescription)")
+            showAlert(title: "Error", message: "Failed to add the reminder. Please try again.")
+        }
+    }
+
+    // Show an alert to the user
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        
+        if let rootViewController = UIApplication.shared.windows.first?.rootViewController {
+            rootViewController.present(alert, animated: true, completion: nil)
         }
     }
     
@@ -205,128 +282,277 @@ struct Product_Page: View {
             DispatchQueue.main.async {
                 product_name = data["name"] as? String ?? "Unknown Product"
                 seller_name = data["siteName"] as? String ?? "Unknown Seller"
-//                seller_likes = Int(data["seller_likes"] as? String ?? "0") ?? ""
-                product_likes = Int(data["likes"] as? String ?? "0") ?? 0
-                product_dislikes = Int(data["dislikes"] as? String ?? "0") ?? 0
-                product_ratings = Int(data["rating"] as? String ?? "0") ?? 0
+                product_likes = data["likes"] as? Int ?? 0
+                product_dislikes = data["dislikes"] as? Int ?? 0
+                product_ratings = data["rating"] as? Int ?? 0
                 product_desc = data["description"] as? String ?? "No description available."
                 product_img = data["product_image"] as? String ?? "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
                 product_price = Int(data["price"] as? String ?? "0") ?? 0
                 
                 if let sellerID = data["seller_id"] as? String {
-                                    fetchSellerProfile(sellerID: sellerID)
-                                }
+                    fetchSellerProfile(sellerID: sellerID)
+                }
             }
         }
     }
     
     // Fetch other products from Firestore
-        private func fetchOtherProducts() {
-            db.collection("products").limit(to: 10).getDocuments { snapshot, error in
-                if let error = error {
-                    print("Error fetching other products: \(error)")
-                    return
+    private func fetchOtherProducts() {
+        db.collection("products").limit(to: 10).getDocuments { snapshot, error in
+            if let error = error {
+                print("Error fetching other products: \(error)")
+                return
+            }
+            
+            guard let documents = snapshot?.documents else {
+                print("No other products found")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.otherProducts = documents.compactMap { doc in
+                    let data = doc.data()
+                    return Products(
+                        id: doc.documentID,
+                        name: data["name"] as? String ?? "Unknown Product",
+                        price: Double(data["price"] as? String ?? "0") ?? 0.0,
+                        siteName: data["siteName"] as? String ?? "Unknown Seller",
+                        likes: data["likes"] as? Int ?? 0,
+                        dislikes: data["dislikes"] as? Int ?? 0,
+                        rating: Double(data["rating"] as? String ?? "0") ?? 0.0,
+                        categories: [],
+                        imageName: data["product_image"] as? String ?? "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
+                    )
                 }
-                
-                guard let documents = snapshot?.documents else {
-                    print("No other products found")
-                    return
-                }
-                
+            }
+        }
+    }
+    
+    // Fetch seller profile
+    private func fetchSellerProfile(sellerID: String) {
+        db.collection("sellers").document(sellerID).getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching seller profile: \(error)")
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                print("No seller data found for ID: \(sellerID)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                seller_profile_img_link = data["profile_image"] as? String ?? "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
+                seller_name = data["name"] as? String ?? "Unknown"
+                seller_likes = data["total_likes"] as? String ?? ""
+                seller_likes = seller_likes + " Likes"
+            }
+        }
+    }
+    
+    // Check if the product is already in favorites
+    private func checkIfFavorite() {
+        guard !userID.isEmpty else { return }
+        
+        db.collection("customers").document(userID).getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching customer data: \(error)")
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                print("No customer data found for ID: \(userID)")
+                return
+            }
+            
+            if let favList = data["fav_list"] as? [String] {
                 DispatchQueue.main.async {
-                    self.otherProducts = documents.compactMap { doc in
-                        let data = doc.data()
-                        return Products(
-                            id: doc.documentID,
-                            name: data["name"] as? String ?? "Unknown Product",
-                            price: Double(data["price"] as? String ?? "0") ?? 0.0,
-                            siteName: data["siteName"] as? String ?? "Unknown Seller",
-                            likes: Int(data["likes"] as? String ?? "0") ?? 0,
-                            dislikes: Int(data["dislikes"] as? String ?? "0") ?? 0,
-                            rating: Double(data["rating"] as? String ?? "0") ?? 0.0,
-                            categories: [],
-                            imageName: data["product_image"] as? String ?? "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
-                        )
+                    self.isFavorite = favList.contains(self.productID)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.isFavorite = false
+                }
+            }
+        }
+    }
+    
+    // Toggle favorite status
+    private func toggleFavorite() {
+        guard !userID.isEmpty else { return }
+        
+        let customerRef = db.collection("customers").document(userID)
+        
+        if isFavorite {
+            // Remove from favorites
+            customerRef.updateData([
+                "fav_list": FieldValue.arrayRemove([productID])
+            ]) { error in
+                if let error = error {
+                    print("Error removing favorite: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.isFavorite = false
+                    }
+                }
+            }
+        } else {
+            // Add to favorites
+            customerRef.updateData([
+                "fav_list": FieldValue.arrayUnion([productID])
+            ]) { error in
+                if let error = error {
+                    print("Error adding favorite: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.isFavorite = true
                     }
                 }
             }
         }
-    
-    private func fetchSellerProfile(sellerID: String) {
-            db.collection("sellers").document(sellerID).getDocument { snapshot, error in
-                if let error = error {
-                    print("Error fetching seller profile: \(error)")
-                    return
-                }
-                
-                guard let data = snapshot?.data() else {
-                    print("No seller data found for ID: \(sellerID)")
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    seller_profile_img_link = data["profile_image"] as? String ?? "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
-                    seller_name = data["name"] as? String ?? "Unknown"
-                    seller_likes = data["total_likes"] as? String ?? ""
-                    seller_likes = seller_likes + " Likes"
-                }
-            }
-        }
-}
-
-// Reusable Icon Button Component for Product Actions
-struct IconActionButton: View {
-    var iconName: String
-    var label: String
-    
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(iconName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18) // Adjust icon size for consistency
-            if !label.isEmpty {
-                Text(label)
-                    .font(.custom("Heebo-Regular", size: 12))
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.white)
-        .cornerRadius(8)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
+    
+    // Check if the user has liked or disliked the product
+    private func checkUserInteraction() {
+        guard !userID.isEmpty else { return }
+        
+        let customerRef = db.collection("customers").document(userID)
+        customerRef.getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching customer data: \(error)")
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                print("No customer data found for ID: \(userID)")
+                return
+            }
+            
+            if let likedProducts = data["liked_products"] as? [String] {
+                DispatchQueue.main.async {
+                    self.hasLiked = likedProducts.contains(self.productID)
+                }
+            }
+            
+            if let dislikedProducts = data["disliked_products"] as? [String] {
+                DispatchQueue.main.async {
+                    self.hasDisliked = dislikedProducts.contains(self.productID)
+                }
+            }
+        }
+    }
+    
+    // Toggle like status
+    private func toggleLike() {
+        guard !userID.isEmpty else { return }
+        
+        let productRef = db.collection("products").document(productID)
+        let customerRef = db.collection("customers").document(userID)
+        
+        if hasLiked {
+            // Unlike the product
+            productRef.updateData([
+                "likes": FieldValue.increment(Int64(-1))
+            ])
+            customerRef.updateData([
+                "liked_products": FieldValue.arrayRemove([productID])
+            ]) { error in
+                if let error = error {
+                    print("Error unliking product: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.product_likes -= 1
+                        self.hasLiked = false
+                    }
+                }
+            }
+        } else {
+            // Like the product
+            var updates: [String: Any] = [
+                "likes": FieldValue.increment(Int64(1))
+            ]
+            var customerUpdates: [String: Any] = [
+                "liked_products": FieldValue.arrayUnion([productID])
+            ]
+            if hasDisliked {
+                // Remove dislike
+                updates["dislikes"] = FieldValue.increment(Int64(-1))
+                customerUpdates["disliked_products"] = FieldValue.arrayRemove([productID])
+            }
+            productRef.updateData(updates)
+            customerRef.updateData(customerUpdates) { error in
+                if let error = error {
+                    print("Error liking product: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.product_likes += 1
+                        self.hasLiked = true
+                        if self.hasDisliked {
+                            self.product_dislikes -= 1
+                            self.hasDisliked = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Toggle dislike status
+    private func toggleDislike() {
+        guard !userID.isEmpty else { return }
+        
+        let productRef = db.collection("products").document(productID)
+        let customerRef = db.collection("customers").document(userID)
+        
+        if hasDisliked {
+            // Remove dislike
+            productRef.updateData([
+                "dislikes": FieldValue.increment(Int64(-1))
+            ])
+            customerRef.updateData([
+                "disliked_products": FieldValue.arrayRemove([productID])
+            ]) { error in
+                if let error = error {
+                    print("Error removing dislike: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.product_dislikes -= 1
+                        self.hasDisliked = false
+                    }
+                }
+            }
+        } else {
+            // Dislike the product
+            var updates: [String: Any] = [
+                "dislikes": FieldValue.increment(Int64(1))
+            ]
+            var customerUpdates: [String: Any] = [
+                "disliked_products": FieldValue.arrayUnion([productID])
+            ]
+            if hasLiked {
+                // Remove like
+                updates["likes"] = FieldValue.increment(Int64(-1))
+                customerUpdates["liked_products"] = FieldValue.arrayRemove([productID])
+            }
+            productRef.updateData(updates)
+            customerRef.updateData(customerUpdates) { error in
+                if let error = error {
+                    print("Error disliking product: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.product_dislikes += 1
+                        self.hasDisliked = true
+                        if self.hasLiked {
+                            self.product_likes -= 1
+                            self.hasLiked = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
 }
-
-//// Reusable Product Card for Related Products
-//struct ProductCard: View {
-//    var imageName: String
-//    var productName: String
-//    var price: String
-//
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 5) {
-//            Image(imageName)
-//                .resizable()
-//                .scaledToFit()
-//                .frame(height: 150)
-//                .cornerRadius(10)
-//
-//            Text(productName)
-//                .font(.custom("Heebo-Regular", size: 14))
-//                .foregroundColor(.black)
-//
-//            Text(price)
-//                .font(.custom("Heebo-Bold", size: 14))
-//                .foregroundColor(Color(hexValue: "#F2A213"))
-//        }
-//        .frame(width: 150)
-//        .background(Color.white)
-//        .cornerRadius(12)
-//        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-//    }
-//}
 
 // Utility to create a color from hex value
 extension Color {
@@ -345,7 +571,9 @@ extension Color {
     }
 }
 
-
-#Preview {
-    Product_Page(productID: "AqLHYVv64EVezlPHmyQ6")
+// Preview Provider
+struct Product_Page_Previews: PreviewProvider {
+    static var previews: some View {
+        Product_Page(productID: "AqLHYVv64EVezlPHmyQ6")
+    }
 }

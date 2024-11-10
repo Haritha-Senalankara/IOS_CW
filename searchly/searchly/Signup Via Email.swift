@@ -137,76 +137,7 @@ struct Signup_Via_Email: View {
 }
 
 
-// Custom TextField Component
-struct CustomTextField: View {
-    var placeholder: String
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            TextField(placeholder, text: $text)
-                .font(.custom("Heebo-Regular", size: 16))
-                .padding()
-            
-            if !text.isEmpty {
-                Button(action: {
-                    text = ""
-                }) {
-                    Image("icon-x")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                }
-            }
-        }
-        .overlay(Rectangle().frame(height: 1).padding(.top, 35), alignment: .bottom)
-        .foregroundColor(Color.gray)
-    }
-}
 
-// Custom SecureField Component
-struct CustomSecureField: View {
-    var placeholder: String
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            SecureField(placeholder, text: $text)
-                .font(.custom("Heebo-Regular", size: 16))
-                .padding()
-            
-            if !text.isEmpty {
-                Button(action: {
-                    text = ""
-                }) {
-                    Image("icon-x")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                }
-            }
-        }
-        .overlay(Rectangle().frame(height: 1).padding(.top, 35), alignment: .bottom)
-        .foregroundColor(Color.gray)
-    }
-}
-
-//// Utility to create a color from hex value
-//extension Color {
-//    init(hex: String) {
-//        let scanner = Scanner(string: hex)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
 
 #Preview {
     Signup_Via_Email()
