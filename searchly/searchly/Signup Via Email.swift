@@ -27,7 +27,7 @@ struct Signup_Via_Email: View {
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#102A36"))
                 
-                Text("Sign Up to track your favorite products, set price alerts and unlock many features.")
+                Text("Sign up to track your favorite products, set price alerts, and unlock many features.")
                     .font(.custom("Heebo-Regular", size: 16))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
@@ -64,7 +64,7 @@ struct Signup_Via_Email: View {
             .edgesIgnoringSafeArea(.all)
             .background(
                 NavigationLink(
-                    destination: Login_Via_Email(), // Navigate to the Login_Via_Email view
+                    destination: Login_Via_Email(), // Navigate to the Login view
                     isActive: $navigateToLogin
                 ) {
                     EmptyView()
@@ -107,7 +107,7 @@ struct Signup_Via_Email: View {
             // Save user information to Firestore
             let db = Firestore.firestore()
             let userData: [String: Any] = [
-                "name": firstName + " " + lastName,
+                "name": "\(firstName) \(lastName)",
                 "email_address": email,
                 "createdAt": FieldValue.serverTimestamp()
             ]
@@ -127,18 +127,21 @@ struct Signup_Via_Email: View {
                         errorMessage = "Error updating profile: \(error.localizedDescription)"
                     } else {
                         // Navigate to Login page on success
-                        navigateToLogin = true
+                        errorMessage = "Sign Up Successful! Redirecting to Login..."
+                        showAlert = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            navigateToLogin = true
+                        }
                     }
-                    showAlert = true
                 }
             }
         }
     }
 }
 
-
-
-
+// MARK: - Preview
 #Preview {
     Signup_Via_Email()
 }
+
+

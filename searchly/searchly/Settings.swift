@@ -1,30 +1,14 @@
-//
-//  Settings.swift
-//  searchly
-//
-//  Created by cobsccompy4231p-007 on 2024-10-27.
-//
-
 import SwiftUI
+import FirebaseAuth
 
 struct Settings: View {
     @State private var isNotificationEnabled: Bool = true
-    
+    @State private var navigateToOnboarding: Bool = false // State to handle navigation to onboarding
+
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
             HStack {
-                Button(action: {
-                    // Back action
-                }) {
-                    Image(systemName: "arrow.left")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.black)
-                }
-                .padding(.leading, 20)
-                
                 Spacer()
                 
                 Image("notification-icon")
@@ -100,17 +84,17 @@ struct Settings: View {
             .padding(.horizontal, 20)
             .padding(.top, 10)
             
-            Spacer()
+            Spacer() // Push the logout button and navigation bar to the bottom
             
-            // Save Button
+            // Logout Button
             Button(action: {
-                // Save action
+                logout()
             }) {
-                Text("Save")
+                Text("Logout")
                     .font(.custom("Heebo-Bold", size: 16))
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color(hexValue: "#F2A213"))
+                    .background(Color.red)
                     .foregroundColor(.white)
                     .cornerRadius(10)
             }
@@ -118,36 +102,79 @@ struct Settings: View {
             .padding(.bottom, 30)
             
             // Bottom Navigation Bar
-            Divider()
-            HStack {
-                NavigationLink(destination: Home()) {
-                    BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+            VStack(spacing: 0) {
+                Divider()
+                HStack {
+                    NavigationLink(destination: Home()) {
+                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
                     }
-                
-                    //add nav here
-                Spacer()
-                NavigationLink(destination: Wishlist()) {
+                    
+                    Spacer()
+                    NavigationLink(destination: Wishlist()) {
                         BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
                     }
-                Spacer()
-                NavigationLink(destination: Settings()) {
+                    Spacer()
+                    NavigationLink(destination: Settings()) {
                         BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
                     }
+                }
+                .padding(.horizontal, 40)
+                .padding(.vertical, 10)
+                .background(Color(hexValue: "#102A36")) // Dark color as per style guide
+                .foregroundColor(.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
+                .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
             }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 10)
-            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
+        .background(
+            NavigationLink(
+                destination: onboarding(), // Navigate to onboarding screen
+                isActive: $navigateToOnboarding
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
+    }
+    
+    private func logout() {
+        do {
+            // Sign out from Firebase
+            try Auth.auth().signOut()
+            
+            // Clear user ID from UserDefaults
+            UserDefaults.standard.removeObject(forKey: "userID")
+            
+            // Navigate to onboarding screen
+            navigateToOnboarding = true
+        } catch let signOutError as NSError {
+            print("Error signing out: %@", signOutError)
+        }
     }
 }
 
+// Custom extension for color initialization using hex values
+//extension Color {
+//    init(hexValue: String) {
+//        let scanner = Scanner(string: hexValue)
+//        _ = scanner.scanString("#")
+//        
+//        var rgb: UInt64 = 0
+//        scanner.scanHexInt64(&rgb)
+//        
+//        let red = Double((rgb >> 16) & 0xFF) / 255.0
+//        let green = Double((rgb >> 8) & 0xFF) / 255.0
+//        let blue = Double(rgb & 0xFF) / 255.0
+//        
+//        self.init(red: red, green: green, blue: blue)
+//    }
+//}
 
-
-#Preview {
-    Settings()
+// Preview for SwiftUI canvas
+struct Settings_Previews: PreviewProvider {
+    static var previews: some View {
+        Settings()
+    }
 }

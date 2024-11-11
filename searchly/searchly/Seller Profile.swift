@@ -29,16 +29,6 @@ struct Seller_Profile: View {
         VStack(spacing: 0) {
             // Top Navigation Bar
             HStack {
-                Button(action: {
-                    // Back action
-                }) {
-                    Image(systemName: "arrow.left")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.black)
-                }
-                .padding(.leading, 20)
                 
                 Spacer()
                 
@@ -162,6 +152,7 @@ struct Seller_Profile: View {
         .onAppear {
             fetchSellerData()
         }
+        .navigationBarBackButtonHidden(true)
     }
     
     // Fetch seller data from Firestore and parse as JSON

@@ -1,15 +1,9 @@
-//
-//  onboarding.swift
-//  searchly
-//
-//  Created by cobsccompy4231p-007 on 2024-10-27.
-//
-
 import SwiftUI
 
 struct onboarding: View {
     @State private var navigateToLoginSignup = false // State to trigger navigation
-    
+    @State private var navigateToHome = false // State to navigate directly to Home()
+
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
@@ -88,11 +82,47 @@ struct onboarding: View {
                 }
                 .hidden()
             )
+            .background(
+                NavigationLink(
+                    destination: Home(), // Navigate to Home view
+                    isActive: $navigateToHome
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            )
+            .onAppear {
+                checkUserStatus()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
         .navigationBarBackButtonHidden(true)
     }
+
+    // Check if the user is already logged in
+    private func checkUserStatus() {
+        if let _ = UserDefaults.standard.string(forKey: "userID") {
+            // If userID is found, navigate to Home
+            navigateToHome = true
+        }
+    }
 }
+//
+//extension Color {
+//    init(hex: String) {
+//        let scanner = Scanner(string: hex)
+//        _ = scanner.scanString("#")
+//        
+//        var rgb: UInt64 = 0
+//        scanner.scanHexInt64(&rgb)
+//        
+//        let red = Double((rgb >> 16) & 0xFF) / 255.0
+//        let green = Double((rgb >> 8) & 0xFF) / 255.0
+//        let blue = Double(rgb & 0xFF) / 255.0
+//        
+//        self.init(red: red, green: green, blue: blue)
+//    }
+//}
 
 #Preview {
     onboarding()

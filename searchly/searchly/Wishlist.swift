@@ -10,6 +10,7 @@ import FirebaseFirestore
 
 struct Wishlist: View {
     @StateObject private var viewModel = WishlistViewModel()
+    @State private var navigateToProfile = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -23,21 +24,25 @@ struct Wishlist: View {
                     .frame(width: 20, height: 20)
                     .padding(.trailing, 15)
                 
-                Image("profile-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 20)
+                Button(action: {
+                    navigateToProfile = true // Trigger navigation to the profile page
+                }) {
+                    Image("profile-icon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .padding(.trailing, 20)
+                }
             }
             .padding(.top, 50)
             .padding(.bottom, 10)
             
             // Title
-//            Text("My Wishlist")
-//                .font(.custom("Heebo-Bold", size: 24))
-//                .padding(.vertical, 10)
+            Text("My Wishlist")
+                .font(.custom("Heebo-Bold", size: 24))
+                .padding(.vertical, 10)
             
-            // Product Listings (2 Columns)
+            // Product Listings
             if viewModel.isLoading {
                 // Show a loading indicator while fetching data
                 ProgressView()
@@ -71,35 +76,50 @@ struct Wishlist: View {
                 }
             }
             
+            Spacer() // Push the bottom navigation bar to the bottom
+            
             // Bottom Navigation Bar
-            Divider()
-            HStack {
-                NavigationLink(destination: Home()) {
-                    BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+            VStack(spacing: 0) {
+                Divider()
+                HStack {
+                    NavigationLink(destination: Home()) {
+                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
                     }
-                
-                    //add nav here
-                Spacer()
-                NavigationLink(destination: Wishlist()) {
+                    
+                    Spacer()
+                    
+                    NavigationLink(destination: Wishlist()) {
                         BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: true)
                     }
-                Spacer()
-                NavigationLink(destination: Settings()) {
+                    
+                    Spacer()
+                    
+                    NavigationLink(destination: Settings()) {
                         BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
                     }
+                }
+                .padding(.horizontal, 40)
+                .padding(.vertical, 10)
+                .background(Color(hexValue: "#102A36"))
+                .foregroundColor(.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
+                .padding(.bottom, 30) // Ensure it doesn't overlap with the home indicator
             }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 10)
-            .background(Color(hexValue: "#102A36"))
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
         .onAppear {
             viewModel.fetchWishlistProducts()
         }
+        .background(
+            NavigationLink(
+                destination: Customer_Profile(), // Navigate to Customer_Profile view
+                isActive: $navigateToProfile
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
 }
 
@@ -119,7 +139,7 @@ class WishlistViewModel: ObservableObject {
         self.userID = uid
         isLoading = true
         
-        // Fetch fav_list from customer's document
+        // Fetch favorite list from customer's document
         db.collection("customers").document(userID).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
             if let error = error {
@@ -197,11 +217,10 @@ class WishlistViewModel: ObservableObject {
     }
 }
 
-
-
 // Preview Provider
 struct Wishlist_Previews: PreviewProvider {
     static var previews: some View {
         Wishlist()
     }
 }
+

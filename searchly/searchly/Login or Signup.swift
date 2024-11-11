@@ -156,21 +156,21 @@ struct Login_or_Signup: View {
             self.showAlert = true
             return
         }
-        
+
         GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
             if let error = error {
                 self.errorMessage = "Google Sign-In failed: \(error.localizedDescription)"
                 self.showAlert = true
                 return
             }
-            
+
             guard let user = result?.user,
                   let idToken = user.idToken?.tokenString else {
                 self.errorMessage = "Unable to fetch Google ID token."
                 self.showAlert = true
                 return
             }
-            
+
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
             Auth.auth().signIn(with: credential) { authResult, error in
                 if let error = error {
@@ -178,41 +178,60 @@ struct Login_or_Signup: View {
                     self.showAlert = true
                     return
                 }
-                
+
                 // Successfully signed in
                 if let authUser = authResult?.user {
                     // Save user ID locally
                     UserDefaults.standard.set(authUser.uid, forKey: "userID")
-                    
-                    // Save user info to Firestore
-                    saveUserToFirestore(
+
+                    // Check if user already exists in Firestore
+                    checkUserExistsAndSave(
                         userID: authUser.uid,
                         email: authUser.email ?? "Unknown Email",
                         firstName: user.profile?.givenName ?? "Unknown",
                         lastName: user.profile?.familyName ?? "Unknown",
                         profileImage: user.profile?.imageURL(withDimension: 200)?.absoluteString ?? ""
                     )
-                    
+
                     navigateToHome = true
                 }
             }
         }
-        func saveUserToFirestore(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
-            let userData: [String: Any] = [
-                "email_address": email,
-                "name": firstName + " " + lastName,
-                "profile_image": profileImage,
-                "created_at": Timestamp()
-            ]
-            
-            db.collection("customers").document(userID).setData(userData) { error in
-                if let error = error {
-                    print("Error saving user data: \(error.localizedDescription)")
-                } else {
-                    print("User data saved successfully.")
-                }
+    }
+
+    func checkUserExistsAndSave(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
+        db.collection("customers").document(userID).getDocument { document, error in
+            if let error = error {
+                print("Error checking user existence: \(error.localizedDescription)")
+                return
             }
-        }}
+
+            if let document = document, document.exists {
+                print("User already exists in Firestore.")
+            } else {
+                // User does not exist, save the new user
+                saveUserToFirestore(userID: userID, email: email, firstName: firstName, lastName: lastName, profileImage: profileImage)
+            }
+        }
+    }
+
+    func saveUserToFirestore(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
+        let userData: [String: Any] = [
+            "email_address": email,
+            "name": firstName + " " + lastName,
+            "profile_image": profileImage,
+            "created_at": Timestamp()
+        ]
+
+        db.collection("customers").document(userID).setData(userData) { error in
+            if let error = error {
+                print("Error saving user data: \(error.localizedDescription)")
+            } else {
+                print("User data saved successfully.")
+            }
+        }
+    }
+
 }
 
 

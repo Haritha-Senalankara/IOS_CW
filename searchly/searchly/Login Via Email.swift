@@ -1,10 +1,3 @@
-//
-//  Login Via Email.swift
-//  searchly
-//
-//  Created by cobsccompy4231p-007 on 2024-10-27.
-//
-
 import SwiftUI
 import FirebaseAuth
 
@@ -14,6 +7,7 @@ struct Login_Via_Email: View {
     @State private var errorMessage: String = ""
     @State private var showAlert = false
     @State private var navigateToSignup = false // State for navigation to signup
+    @State private var navigateToHome = false  // State for navigation to home
 
     var body: some View {
         NavigationView {
@@ -128,13 +122,23 @@ struct Login_Via_Email: View {
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
             .background(
-                NavigationLink(
-                    destination: Signup_Via_Email(), // Navigate to the Signup_Via_Email view
-                    isActive: $navigateToSignup
-                ) {
-                    EmptyView()
+                Group {
+                    NavigationLink(
+                        destination: Signup_Via_Email(), // Navigate to the Signup view
+                        isActive: $navigateToSignup
+                    ) {
+                        EmptyView()
+                    }
+                    .hidden()
+                    
+                    NavigationLink(
+                        destination: Home(), // Navigate to the Home view
+                        isActive: $navigateToHome
+                    ) {
+                        EmptyView()
+                    }
+                    .hidden()
                 }
-                .hidden()
             )
         }
         .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
@@ -142,34 +146,58 @@ struct Login_Via_Email: View {
     }
     
     private func login() {
-            // Basic validation
-            guard !username.isEmpty, !password.isEmpty else {
-                errorMessage = "Please fill in both email and password."
+        // Basic validation
+        guard !username.isEmpty, !password.isEmpty else {
+            errorMessage = "Please fill in both email and password."
+            showAlert = true
+            return
+        }
+        
+        // Attempt to sign in with Firebase
+        Auth.auth().signIn(withEmail: username, password: password) { authResult, error in
+            if let error = error {
+                errorMessage = error.localizedDescription
                 showAlert = true
                 return
             }
             
-            // Attempt to sign in with Firebase
-            Auth.auth().signIn(withEmail: username, password: password) { authResult, error in
-                if let error = error {
-                    errorMessage = error.localizedDescription
-                    showAlert = true
-                    return
-                }
+            // Successfully signed in
+            if let user = authResult?.user {
+                // Save user ID locally for future use
+                UserDefaults.standard.set(user.uid, forKey: "userID")
+                print("User ID saved locally: \(user.uid)")
                 
-                // Successfully signed in
-                if let user = authResult?.user {
-                    // Save user ID locally for future use
-                    UserDefaults.standard.set(user.uid, forKey: "userID")
-                    print("User ID saved locally: \(user.uid)")
-                }
-                
-                errorMessage = "Login Successful!"
-                showAlert = true
+                // Navigate to Home page
+                navigateToHome = true
             }
         }
+    }
 }
 
+//// Placeholder Home View
+//struct Home: View {
+//    var body: some View {
+//        Text("Welcome to Home!")
+//            .font(.title)
+//            .padding()
+//    }
+//}
+
+// Preview
 #Preview {
     Login_Via_Email()
 }
+
+// Extensions for Hex Colors
+//extension Color {
+//    init(hex: String) {
+//        let scanner = Scanner(string: hex)
+//        _ = scanner.scanString("#")
+//        var rgb: UInt64 = 0
+//        scanner.scanHexInt64(&rgb)
+//        let r = Double((rgb >> 16) & 0xFF) / 255.0
+//        let g = Double((rgb >> 8) & 0xFF) / 255.0
+//        let b = Double(rgb & 0xFF) / 255.0
+//        self.init(red: r, green: g, blue: b)
+//    }
+//}
