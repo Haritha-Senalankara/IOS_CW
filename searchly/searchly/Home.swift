@@ -13,7 +13,8 @@ import MapKit
 struct Home: View {
     @StateObject private var viewModel = ProductViewModel()
     @State private var showPriceFilter = false
-    @State private var selectedPrice: Double = 350000 // Default value
+    @State private var selectedMinPrice: Double = 0 // Default min price
+    @State private var selectedMaxPrice: Double = 1000000 // Default max price
     
     @State private var showLocationFilter = false // State to control location filter visibility
     @State private var selectedLocation: CLLocationCoordinate2D? // Selected location
@@ -175,8 +176,13 @@ struct Home: View {
                 }
             }
             .sheet(isPresented: $showPriceFilter) {
-                PriceFilterView(selectedPrice: $selectedPrice, isPresented: $showPriceFilter) {
-                    viewModel.selectedPrice = selectedPrice
+                PriceFilterView(
+                    selectedMinPrice: $selectedMinPrice,
+                    selectedMaxPrice: $selectedMaxPrice,
+                    isPresented: $showPriceFilter
+                ) {
+                    viewModel.selectedMinPrice = selectedMinPrice
+                    viewModel.selectedMaxPrice = selectedMaxPrice
                     viewModel.applyFilters()
                 }
             }

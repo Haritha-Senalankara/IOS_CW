@@ -145,13 +145,13 @@ struct Product_Page: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 15) {
                                     // Like Button with tap gesture
-                                    IconActionButton(iconName: hasLiked ? "like-icon-product-active" : "like-icon-product", label: String(product_likes))
+                                    IconActionButton(iconName: hasLiked ? "like-icon-product" : "like-icon-product", label: String(product_likes))
                                         .onTapGesture {
                                             toggleLike()
                                         }
                                     
                                     // Dislike Button with tap gesture
-                                    IconActionButton(iconName: hasDisliked ? "dislike-icon-product-active" : "dislike-icon-product", label: String(product_dislikes))
+                                    IconActionButton(iconName: hasDisliked ? "dislike-icon-product" : "dislike-icon-product", label: String(product_dislikes))
                                         .onTapGesture {
                                             toggleDislike()
                                         }
@@ -284,13 +284,26 @@ struct Product_Page: View {
                             Text(product_desc)
                                 .font(.custom("Heebo-Regular", size: 14))
                                 .foregroundColor(.gray)
-                                .lineLimit(isExpanded ? nil : 10)
+                                .lineLimit(isExpanded ? nil : 3)
                                 .onTapGesture {
                                     withAnimation {
                                         isExpanded.toggle()
                                     }
                                 }
                                 .padding(.top, 10)
+
+                            if !isExpanded {
+                                Button(action: {
+                                    withAnimation {
+                                        isExpanded = true
+                                    }
+                                }) {
+                                    Text("Read More")
+                                        .font(.custom("Heebo-Regular", size: 14))
+                                        .foregroundColor(.black)
+                                }
+                                .padding(.top, 5)
+                            }
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 10)
@@ -302,9 +315,12 @@ struct Product_Page: View {
                         
                         Divider()
                         
-                        // Other Product Listings
                         VStack(alignment: .leading, spacing: 10) {
-                            // You can add a title here if you want
+                            Text("Similar Products")
+                                .font(.custom("Heebo-Bold", size: 16))
+                                .padding(.horizontal, 20)
+                                .padding(.top, 10)
+                            
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
                                     ForEach(otherProducts, id: \.id) { product in

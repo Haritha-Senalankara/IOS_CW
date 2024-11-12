@@ -24,6 +24,8 @@ struct Seller_Profile: View {
 
     private let db = Firestore.firestore()
     let sellerID: String
+    
+    @StateObject private var viewModel = ProductViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,86 +49,136 @@ struct Seller_Profile: View {
             .padding(.top, 50)
             .padding(.bottom, 10)
             
-            // Seller Logo
-            AsyncImage(url: URL(string: seller_profile_img_link)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 100, height: 100)
-                    .clipped()
-                    .cornerRadius(100)
-            } placeholder: {
-                Color.gray
-                    .frame(width: 100, height: 100)
-                    .cornerRadius(10)
-            }
-//            Image(systemName: "person.circle.fill") // Placeholder for seller logo
-//                .resizable()
-//                .scaledToFit()
-//                .frame(width: 100, height: 100)
-//                .padding(.top, 10)
-//            
-            // Seller Information
-            Text(sellerName)
-                .font(.custom("Heebo-Bold", size: 20))
-                .foregroundColor(Color(hexValue: "#102A36"))
-                .padding(.top, 5)
-            
-            Text(sellerLikes)
-                .font(.custom("Heebo-Regular", size: 14))
-                .foregroundColor(.gray)
-                .padding(.bottom, 20)
-            
-            // Contact Buttons
-            VStack(spacing: 15) {
-                HStack(spacing: 20) {
-                    ContactButton(iconName: "phone.fill", title: "Call") {
-                        if let phoneURL = URL(string: "tel://\(phoneNumber)") {
-                            UIApplication.shared.open(phoneURL)
-                        }
-                    }
-                    ContactButton(iconName: "message.fill", title: "WhatsApp") {
-                        if let whatsappURL = URL(string: "https://wa.me/\(whatsappNumber)") {
-                            UIApplication.shared.open(whatsappURL)
-                        }
-                    }
+            ScrollView{
+                // Seller Logo
+                AsyncImage(url: URL(string: seller_profile_img_link)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
+                        .clipped()
+                        .cornerRadius(100)
+                } placeholder: {
+                    Color.gray
+                        .frame(width: 100, height: 100)
+                        .cornerRadius(10)
                 }
-                HStack(spacing: 20) {
-                    ContactButton(iconName: "globe", title: "Website") {
-                        if let url = URL(string: sellerWebsite) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                    ContactButton(iconName: "square.and.arrow.up", title: "Share")
-                }
-            }
-            .padding(.horizontal, 20)
-            
-            // Seller Description
-            VStack(alignment: .leading, spacing: 10) {
-                Text(sellerDescription)
+                // Seller Information
+                Text(sellerName)
+                    .font(.custom("Heebo-Bold", size: 20))
+                    .foregroundColor(Color(hexValue: "#102A36"))
+                    .padding(.top, 5)
+                
+                Text(sellerLikes)
                     .font(.custom("Heebo-Regular", size: 14))
                     .foregroundColor(.gray)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.bottom, 20)
                 
-//                Text("Email: \(sellerEmail)")
-//                    .font(.custom("Heebo-Bold", size: 14))
-//                    .foregroundColor(Color(hexValue: "#102A36"))
-//                    .padding(.horizontal, 20)
-            }
-            
-            // Map
-            if let location = sellerLocation {
-                MapView(coordinate: location)
-                    .frame(height: 200)
+                // Contact Buttons
+                VStack(spacing: 15) {
+                    HStack(spacing: 20) {
+                        ContactButton(iconName: "phone.fill", title: "Call") {
+                            if let phoneURL = URL(string: "tel://\(phoneNumber)") {
+                                if UIApplication.shared.canOpenURL(phoneURL) {
+                                    UIApplication.shared.open(phoneURL)
+                                } else {
+                                    print("Device cannot make calls.")
+                                }
+                            }
+                        }
+                        ContactButton(iconName: "message.fill", title: "WhatsApp") {
+                            if let whatsappURL = URL(string: "https://wa.me/\(whatsappNumber)") {
+                                if UIApplication.shared.canOpenURL(whatsappURL) {
+                                    UIApplication.shared.open(whatsappURL)
+                                } else {
+                                    print("WhatsApp is not installed.")
+                                }
+                            }
+                        }
+                    }
+                    HStack(spacing: 20) {
+                        ContactButton(iconName: "globe", title: "Website") {
+                            if let url = URL(string: sellerWebsite) {
+                                if UIApplication.shared.canOpenURL(url) {
+                                    UIApplication.shared.open(url)
+                                } else {
+                                    print("Invalid URL.")
+                                }
+                            }
+                        }
+                        ContactButton(iconName: "square.and.arrow.up", title: "Share") {
+                            // Share functionality can be added here if required
+                            print("Share button tapped")
+                        }
+                    }
+                }
+
+                .padding(.horizontal, 20)
+                
+                // Seller Description
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(sellerDescription)
+                        .font(.custom("Heebo-Regular", size: 14))
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+                    
+                    //                Text("Email: \(sellerEmail)")
+                    //                    .font(.custom("Heebo-Bold", size: 14))
+                    //                    .foregroundColor(Color(hexValue: "#102A36"))
+                    //                    .padding(.horizontal, 20)
+                }
+                
+                // Map
+                if let location = sellerLocation {
+                    VStack {
+                        MapView(coordinate: location)
+                            .frame(height: 200)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 10)
+
+                        Button(action: {
+                            openMaps(for: location)
+                        }) {
+                            Text("Get Directions")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    }
+                } else {
+                    Text("Loading map...")
+                        .font(.custom("Heebo-Regular", size: 14))
+                        .foregroundColor(.gray)
+                        .padding(.top, 20)
+                }
+
+                
+                // Product Listings
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                        ForEach(viewModel.products) { product in
+                            NavigationLink(destination: Product_Page(productID: product.id)) {
+                                ProductCard(
+                                    imageName: product.imageName,
+                                    name: product.name,
+                                    siteName: product.siteName,
+                                    price: "Rs.\(Int(product.price))",
+                                    likes: "\(product.likes)",
+                                    rating: String(format: "%.1f", product.rating)
+                                )
+                            }
+                        }
+                    }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-            } else {
-                Text("Loading map...")
-                    .font(.custom("Heebo-Regular", size: 14))
-                    .foregroundColor(.gray)
-                    .padding(.top, 20)
+                }
             }
             
             Spacer()
@@ -151,10 +203,16 @@ struct Seller_Profile: View {
         .edgesIgnoringSafeArea(.all)
         .onAppear {
             fetchSellerData()
+            viewModel.fetchProducts(sellerID: sellerID)
         }
         .navigationBarBackButtonHidden(true)
     }
     
+    private func openMaps(for location: CLLocationCoordinate2D) {
+        let url = URL(string: "http://maps.apple.com/?daddr=\(location.latitude),\(location.longitude)")!
+        UIApplication.shared.open(url)
+    }
+
     // Fetch seller data from Firestore and parse as JSON
     private func fetchSellerData() {
         db.collection("sellers").document(sellerID).getDocument { snapshot, error in
@@ -203,18 +261,31 @@ struct Seller_Profile: View {
     }
 }
 
-// MapView Component
 struct MapView: View {
     var coordinate: CLLocationCoordinate2D
-    
+
     var body: some View {
-        Map(coordinateRegion: .constant(MKCoordinateRegion(
-            center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        )))
+        Map(
+            coordinateRegion: .constant(MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )),
+            annotationItems: [MapLocation(coordinate: coordinate)]
+        ) { location in
+            MapAnnotation(coordinate: location.coordinate) {
+                Image(systemName: "mappin")
+                    .foregroundColor(.red)
+                    .font(.title)
+            }
+        }
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
+}
+
+struct MapLocation: Identifiable {
+    let id = UUID()
+    let coordinate: CLLocationCoordinate2D
 }
 
 // Reusable Contact Button Component

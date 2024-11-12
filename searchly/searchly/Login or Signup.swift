@@ -110,16 +110,17 @@ struct Login_or_Signup: View {
                 }
                 .padding(.bottom, 110)
                 
-                Button(action: {
-                    // Skip action
-                }) {
-                    Text("I'll do it later")
-                        .font(.custom("Heebo-Regular", size: 14))
-                        .foregroundColor(Color(hex: "#102A36"))
-                }
-                .padding(.top, 10)
-                
-                Spacer()
+//                Button(action: {
+//                    // Skip action
+//                }) {
+//                    Text("I'll do it later")
+//                        .font(.custom("Heebo-Regular", size: 14))
+//                        .foregroundColor(Color(hex: "#102A36"))
+//                }
+//                .padding(.top, 10)
+//                
+//                Spacer()
+                Spacer(minLength: 100)
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)

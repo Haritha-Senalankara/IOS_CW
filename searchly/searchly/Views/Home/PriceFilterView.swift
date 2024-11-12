@@ -8,19 +8,27 @@
 import SwiftUI
 import Foundation
 
-// MARK: - PriceFilterView
 struct PriceFilterView: View {
-    @Binding var selectedPrice: Double
+    @Binding var selectedMinPrice: Double
+    @Binding var selectedMaxPrice: Double
     @Binding var isPresented: Bool
     var onApply: () -> Void // Closure to execute when 'Apply' is tapped
-    
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("Price: Rs.\(Int(selectedPrice))")
+            Text("Minimum Price: Rs.\(Int(selectedMinPrice))")
                 .font(.custom("Heebo-Regular", size: 18))
                 .padding(.top, 20)
             
-            Slider(value: $selectedPrice, in: 0...1000000, step: 10000)
+            Slider(value: $selectedMinPrice, in: 0...selectedMaxPrice, step: 10000)
+                .accentColor(Color(hex: "#F2A213"))
+                .padding(.horizontal, 20)
+            
+            Text("Maximum Price: Rs.\(Int(selectedMaxPrice))")
+                .font(.custom("Heebo-Regular", size: 18))
+                .padding(.top, 10)
+            
+            Slider(value: $selectedMaxPrice, in: selectedMinPrice...1000000, step: 10000)
                 .accentColor(Color(hex: "#F2A213"))
                 .padding(.horizontal, 20)
             

@@ -1,108 +1,90 @@
-//
-//  ProductViewModel.swift
-//  searchly
-//
-//  Created by cobsccompy4231p-007 on 2024-11-10.
-//
-
 import Foundation
 import SwiftUI
 import FirebaseFirestore
 import MapKit
 
-// MARK: - Product ViewModel
 class ProductViewModel: ObservableObject {
     @Published var products: [Products] = []
-    
     private let db = Firestore.firestore()
     
-    // Add properties for filters
-    var selectedPrice: Double?
+    // Additional properties for filtering
+    var selectedMinPrice: Double = 0 // Default minimum price
+    var selectedMaxPrice: Double = 1000000 // Default maximum price
     var selectedLocation: CLLocationCoordinate2D?
     var selectedRadius: Double?
     var selectedRating: Double?
     var selectedLikes: Int?
-    var selectedAppFilters: [String]? // Selected app filter IDs
-    var selectedContactMethodFilters: [String]? // Selected contact method filter IDs
+    var selectedAppFilters: [String]?
+    var selectedContactMethodFilters: [String]?
     var searchText: String?
     
     private var allProducts: [Products] = []
-    
-    // New properties to store all available app filters and contact method filters
     @Published var allAppFilters: [AppFilter] = []
     @Published var allContactMethodFilters: [ContactMethodFilter] = []
     
-    // Fetch products from Firestore
-    func fetchProducts() {
-        let query = db.collection("products")
+    /// Fetch products from Firestore with optional seller filtering
+    func fetchProducts(sellerID: String? = nil) {
+        var query: Query = db.collection("products")
+        
+        // If a sellerID is provided, filter by it
+        if let sellerID = sellerID {
+            query = query.whereField("seller_id", isEqualTo: sellerID)
+        }
         
         query.getDocuments { [weak self] snapshot, error in
             guard let self = self else { return } // Avoid strong reference to self
-
+            
             if let error = error {
                 print("Error fetching products: \(error)")
                 return
             }
-
-            // Temporary array to store products
+            
             var fetchedProducts: [Products] = []
-
-            let group = DispatchGroup() // Use DispatchGroup to handle asynchronous queries
-
+            let group = DispatchGroup() // Handle asynchronous queries
+            
             snapshot?.documents.forEach { document in
                 let data = document.data()
-
-                // Parse fields with proper type handling
+                
+                // Parse product fields
                 let name = data["name"] as? String ?? "Unknown Product"
-                
-                // Parse price
-                let price: Double
-                if let priceString = data["price"] as? String {
-                    price = Double(priceString) ?? 0.0
-                } else if let priceDouble = data["price"] as? Double {
-                    price = priceDouble
-                } else {
-                    price = 0.0
-                }
-                
-                // Parse likes
-                let likes: Int
-                if let likesString = data["likes"] as? String {
-                    likes = Int(likesString) ?? 0
-                } else if let likesInt = data["likes"] as? Int {
-                    likes = likesInt
-                } else {
-                    likes = 0
-                }
-                
-                // Parse dislikes
-                let dislikes: Int
-                if let dislikesString = data["dislikes"] as? String {
-                    dislikes = Int(dislikesString) ?? 0
-                } else if let dislikesInt = data["dislikes"] as? Int {
-                    dislikes = dislikesInt
-                } else {
-                    dislikes = 0
-                }
-                
-                // Parse rating
-                let rating: Double
-                if let ratingString = data["rating"] as? String {
-                    rating = Double(ratingString) ?? 0.0
-                } else if let ratingDouble = data["rating"] as? Double {
-                    rating = ratingDouble
-                } else {
-                    rating = 0.0
-                }
+                let price: Double = {
+                    if let priceString = data["price"] as? String {
+                        return Double(priceString) ?? 0.0
+                    } else if let priceDouble = data["price"] as? Double {
+                        return priceDouble
+                    }
+                    return 0.0
+                }()
+                let likes: Int = {
+                    if let likesString = data["likes"] as? String {
+                        return Int(likesString) ?? 0
+                    } else if let likesInt = data["likes"] as? Int {
+                        return likesInt
+                    }
+                    return 0
+                }()
+                let dislikes: Int = {
+                    if let dislikesString = data["dislikes"] as? String {
+                        return Int(dislikesString) ?? 0
+                    } else if let dislikesInt = data["dislikes"] as? Int {
+                        return dislikesInt
+                    }
+                    return 0
+                }()
+                let rating: Double = {
+                    if let ratingString = data["rating"] as? String {
+                        return Double(ratingString) ?? 0.0
+                    } else if let ratingDouble = data["rating"] as? Double {
+                        return ratingDouble
+                    }
+                    return 0.0
+                }()
                 
                 let sellerID = data["seller_id"] as? String ?? "Unknown Seller"
-                let categories = data["categories"] as? [String] ?? ["Default Category"]
-                let imageName = data["product_image"] as? String ?? "img-1"
+                let categories = data["categories"] as? [String] ?? []
+                let imageName = data["product_image"] as? String ?? "placeholder"
                 
-                // Remove parsing location from product data since it's not stored there
-                let location: CLLocationCoordinate2D? = nil // Will be set from seller's data
-
-                group.enter() // Enter the group for the seller query
+                group.enter() // Enter group for seller query
                 self.db.collection("sellers").document(sellerID).getDocument { sellerSnapshot, error in
                     var sellerName = "Unknown Seller"
                     var sellerLocation: CLLocationCoordinate2D? = nil
@@ -110,34 +92,31 @@ class ProductViewModel: ObservableObject {
                     var sellerContacts: [ContactMethodFilter] = []
                     
                     if let sellerData = sellerSnapshot?.data() {
-                        if let fetchedSellerName = sellerData["name"] as? String {
-                            sellerName = fetchedSellerName
-                        }
+                        sellerName = sellerData["name"] as? String ?? sellerName
+                        
                         // Parse seller location
                         if let locationData = sellerData["location"] as? [String: Any],
                            let lat = locationData["lat"] as? Double,
                            let long = locationData["long"] as? Double {
                             sellerLocation = CLLocationCoordinate2D(latitude: lat, longitude: long)
                         }
+                        
                         // Parse seller apps
                         if let apps = sellerData["apps"] as? [String] {
-                            for appID in apps {
-                                if let appFilter = self.allAppFilters.first(where: { $0.id == appID }) {
-                                    sellerApps.append(appFilter)
-                                }
+                            sellerApps = apps.compactMap { appID in
+                                self.allAppFilters.first(where: { $0.id == appID })
                             }
                         }
+                        
                         // Parse seller contact methods
                         if let contacts = sellerData["contact_methods"] as? [String] {
-                            for contactID in contacts {
-                                if let contactMethodFilter = self.allContactMethodFilters.first(where: { $0.id == contactID }) {
-                                    sellerContacts.append(contactMethodFilter)
-                                }
+                            sellerContacts = contacts.compactMap { contactID in
+                                self.allContactMethodFilters.first(where: { $0.id == contactID })
                             }
                         }
                     }
-
-                    // Create the product object with the seller's name and location
+                    
+                    // Create product object
                     let product = Products(
                         id: document.documentID,
                         name: name,
@@ -152,38 +131,36 @@ class ProductViewModel: ObservableObject {
                         sellerApps: sellerApps,
                         sellerContacts: sellerContacts
                     )
-
                     fetchedProducts.append(product)
-                    group.leave() // Leave the group after completing the seller query
+                    group.leave() // Leave group after query completes
                 }
             }
-
+            
             group.notify(queue: .main) {
-                // Update the products array once all seller queries are complete
                 self.allProducts = fetchedProducts
                 self.applyFilters()
             }
         }
     }
     
-    // Fetch app filters from Firestore
+    // Fetch app filters
     func fetchAppFilters(completion: @escaping () -> Void) {
         db.collection("apps").getDocuments { snapshot, error in
             if let error = error {
-                print("Error fetching apps: \(error)")
+                print("Error fetching app filters: \(error)")
                 completion()
                 return
             }
-
-            var appFilters: [AppFilter] = []
-            snapshot?.documents.forEach { document in
+            
+            let appFilters = snapshot?.documents.compactMap { document -> AppFilter? in
                 let data = document.data()
-                let id = document.documentID
-                let name = data["name"] as? String ?? "Unknown App"
-                let imageURL = data["app_image"] as? String ?? "" // Updated field name
-                let appFilter = AppFilter(id: id, name: name, imageURL: imageURL)
-                appFilters.append(appFilter)
-            }
+                return AppFilter(
+                    id: document.documentID,
+                    name: data["name"] as? String ?? "Unknown App",
+                    imageURL: data["app_image"] as? String ?? ""
+                )
+            } ?? []
+            
             DispatchQueue.main.async {
                 self.allAppFilters = appFilters
                 completion()
@@ -191,24 +168,24 @@ class ProductViewModel: ObservableObject {
         }
     }
     
-    // Fetch contact method filters from Firestore
+    // Fetch contact method filters
     func fetchContactMethodFilters(completion: @escaping () -> Void) {
         db.collection("contact_methods").getDocuments { snapshot, error in
             if let error = error {
-                print("Error fetching contact methods: \(error)")
+                print("Error fetching contact method filters: \(error)")
                 completion()
                 return
             }
-
-            var contactMethodFilters: [ContactMethodFilter] = []
-            snapshot?.documents.forEach { document in
+            
+            let contactMethodFilters = snapshot?.documents.compactMap { document -> ContactMethodFilter? in
                 let data = document.data()
-                let id = document.documentID
-                let name = data["name"] as? String ?? "Unknown Contact"
-                let imageURL = data["method_image"] as? String ?? "" // Updated field name
-                let contactMethodFilter = ContactMethodFilter(id: id, name: name, imageURL: imageURL)
-                contactMethodFilters.append(contactMethodFilter)
-            }
+                return ContactMethodFilter(
+                    id: document.documentID,
+                    name: data["name"] as? String ?? "Unknown Contact",
+                    imageURL: data["method_image"] as? String ?? ""
+                )
+            } ?? []
+            
             DispatchQueue.main.async {
                 self.allContactMethodFilters = contactMethodFilters
                 completion()
@@ -216,66 +193,20 @@ class ProductViewModel: ObservableObject {
         }
     }
     
-    // Apply filters to products
+    // Apply filters
     func applyFilters() {
         var filteredProducts = allProducts
-
-        // Filter by price
-        if let selectedPrice = self.selectedPrice {
-            filteredProducts = filteredProducts.filter { product in
-                product.price <= selectedPrice
-            }
-        }
-
-        // Filter by location
-        if let selectedLocation = self.selectedLocation, let selectedRadius = self.selectedRadius {
-            filteredProducts = filteredProducts.filter { product in
-                if let productLocation = product.location {
-                    let productCoordinate = CLLocation(latitude: productLocation.latitude, longitude: productLocation.longitude)
-                    let selectedCoordinate = CLLocation(latitude: selectedLocation.latitude, longitude: selectedLocation.longitude)
-                    let distance = productCoordinate.distance(from: selectedCoordinate)
-                    return distance <= selectedRadius
-                } else {
-                    return false
-                }
-            }
+        
+        // Filter by price range
+        filteredProducts = filteredProducts.filter {
+            $0.price >= selectedMinPrice && $0.price <= selectedMaxPrice
         }
         
-        // Filter by rating
-        if let selectedRating = self.selectedRating {
-            filteredProducts = filteredProducts.filter { product in
-                product.rating >= selectedRating
-            }
-        }
-        
-        // Filter by likes
-        if let selectedLikes = self.selectedLikes {
-            filteredProducts = filteredProducts.filter { product in
-                product.likes >= selectedLikes
-            }
-        }
-        
-        // Filter by app filters
-        if let selectedAppFilters = self.selectedAppFilters, !selectedAppFilters.isEmpty {
-            filteredProducts = filteredProducts.filter { product in
-                !product.sellerApps.isEmpty && product.sellerApps.contains(where: { selectedAppFilters.contains($0.id) })
-            }
-        }
-        
-        // Filter by contact method filters
-        if let selectedContactMethodFilters = self.selectedContactMethodFilters, !selectedContactMethodFilters.isEmpty {
-            filteredProducts = filteredProducts.filter { product in
-                !product.sellerContacts.isEmpty && product.sellerContacts.contains(where: { selectedContactMethodFilters.contains($0.id) })
-            }
-        }
-
         // Filter by search text
-        if let searchText = self.searchText, !searchText.isEmpty {
-            filteredProducts = filteredProducts.filter { product in
-                product.name.lowercased().contains(searchText.lowercased())
-            }
+        if let searchText = searchText, !searchText.isEmpty {
+            filteredProducts = filteredProducts.filter { $0.name.lowercased().contains(searchText.lowercased()) }
         }
-
+        
         DispatchQueue.main.async {
             self.products = filteredProducts
         }

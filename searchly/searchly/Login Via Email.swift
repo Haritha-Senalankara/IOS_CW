@@ -8,6 +8,8 @@ struct Login_Via_Email: View {
     @State private var showAlert = false
     @State private var navigateToSignup = false // State for navigation to signup
     @State private var navigateToHome = false  // State for navigation to home
+    @State private var showForgotPasswordAlert = false
+    @State private var forgotPasswordEmail = ""
 
     var body: some View {
         NavigationView {
@@ -81,7 +83,7 @@ struct Login_Via_Email: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Forgot Password action
+                            showForgotPasswordAlert = true
                         }) {
                             Text("Forgot Password?")
                                 .font(.custom("Heebo-Regular", size: 14))
@@ -89,6 +91,15 @@ struct Login_Via_Email: View {
                         }
                         .padding(.trailing, 30)
                         .padding(.bottom, 20)
+                        .alert("Reset Password", isPresented: $showForgotPasswordAlert) {
+                            TextField("Enter your email", text: $forgotPasswordEmail)
+                            Button("Send") {
+                                resetPassword()
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("Enter your email to receive password reset instructions.")
+                        }
                     }
                 }
                 
@@ -114,6 +125,7 @@ struct Login_Via_Email: View {
                     Text("Sign Up")
                         .font(.custom("Heebo-Regular", size: 14))
                         .foregroundColor(Color(hex: "#102A36"))
+                        .fontWeight(.bold)
                 }
                 .padding(.top, 80)
                 
@@ -172,32 +184,29 @@ struct Login_Via_Email: View {
             }
         }
     }
+    
+    private func resetPassword() {
+        guard !forgotPasswordEmail.isEmpty else {
+            errorMessage = "Please enter an email address."
+            showAlert = true
+            return
+        }
+        
+        Auth.auth().sendPasswordReset(withEmail: forgotPasswordEmail) { error in
+            if let error = error {
+                errorMessage = error.localizedDescription
+                showAlert = true
+                return
+            }
+            
+            errorMessage = "Password reset email sent successfully!"
+            showAlert = true
+        }
+    }
 }
-
-//// Placeholder Home View
-//struct Home: View {
-//    var body: some View {
-//        Text("Welcome to Home!")
-//            .font(.title)
-//            .padding()
-//    }
-//}
 
 // Preview
 #Preview {
     Login_Via_Email()
 }
 
-// Extensions for Hex Colors
-//extension Color {
-//    init(hex: String) {
-//        let scanner = Scanner(string: hex)
-//        _ = scanner.scanString("#")
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        let r = Double((rgb >> 16) & 0xFF) / 255.0
-//        let g = Double((rgb >> 8) & 0xFF) / 255.0
-//        let b = Double(rgb & 0xFF) / 255.0
-//        self.init(red: r, green: g, blue: b)
-//    }
-//}
