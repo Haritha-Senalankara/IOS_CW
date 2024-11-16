@@ -55,6 +55,9 @@
 		86B19FAA2CE0B67400A71737 /* IconActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B19FA92CE0B67400A71737 /* IconActionButton.swift */; };
 		86B19FAD2CE0B74600A71737 /* CustomSecureField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B19FAC2CE0B74600A71737 /* CustomSecureField.swift */; };
 		86B19FAF2CE0B85600A71737 /* CustomTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B19FAE2CE0B85600A71737 /* CustomTextField.swift */; };
+		86B37C732CE8740D001CC9D5 /* TopNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B37C722CE8740D001CC9D5 /* TopNavBar.swift */; };
+		86B37C752CE87533001CC9D5 /* BottomNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B37C742CE87533001CC9D5 /* BottomNavBar.swift */; };
+		86B37C782CE8BBD2001CC9D5 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B37C772CE8BBD2001CC9D5 /* KeychainHelper.swift */; };
 		86B939632CDB7FFF00EE2F09 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 86B939622CDB7FFF00EE2F09 /* GoogleService-Info.plist */; };
 		86B939672CDB836400EE2F09 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 86B939662CDB836400EE2F09 /* GoogleSignIn */; };
 		86B939692CDB836400EE2F09 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 86B939682CDB836400EE2F09 /* GoogleSignInSwift */; };
@@ -123,6 +126,9 @@
 		86B19FA92CE0B67400A71737 /* IconActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconActionButton.swift; sourceTree = "<group>"; };
 		86B19FAC2CE0B74600A71737 /* CustomSecureField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSecureField.swift; sourceTree = "<group>"; };
 		86B19FAE2CE0B85600A71737 /* CustomTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTextField.swift; sourceTree = "<group>"; };
+		86B37C722CE8740D001CC9D5 /* TopNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopNavBar.swift; sourceTree = "<group>"; };
+		86B37C742CE87533001CC9D5 /* BottomNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomNavBar.swift; sourceTree = "<group>"; };
+		86B37C772CE8BBD2001CC9D5 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		86B939622CDB7FFF00EE2F09 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		86B939642CDB807300EE2F09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -184,6 +190,7 @@
 		863C0DBD2CCE13EB0014D531 /* searchly */ = {
 			isa = PBXGroup;
 			children = (
+				86B37C762CE8BBAC001CC9D5 /* Classes */,
 				86B939642CDB807300EE2F09 /* Info.plist */,
 				86B939622CDB7FFF00EE2F09 /* GoogleService-Info.plist */,
 				86B19F8C2CE0B1E100A71737 /* Views */,
@@ -288,6 +295,8 @@
 			isa = PBXGroup;
 			children = (
 				86B19F9B2CE0B49500A71737 /* BottomNavItem.swift */,
+				86B37C722CE8740D001CC9D5 /* TopNavBar.swift */,
+				86B37C742CE87533001CC9D5 /* BottomNavBar.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -307,6 +316,14 @@
 				86B19FAE2CE0B85600A71737 /* CustomTextField.swift */,
 			);
 			path = "Signup Via Email";
+			sourceTree = "<group>";
+		};
+		86B37C762CE8BBAC001CC9D5 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				86B37C772CE8BBD2001CC9D5 /* KeychainHelper.swift */,
+			);
+			path = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -457,6 +474,7 @@
 				863C0DFF2CCE193F0014D531 /* Forgot Password Step 5.swift in Sources */,
 				863C0DF72CCE190F0014D531 /* Forgot Password Step 1.swift in Sources */,
 				863C0DF52CCE18F50014D531 /* Signup Via Email.swift in Sources */,
+				86B37C782CE8BBD2001CC9D5 /* KeychainHelper.swift in Sources */,
 				86B19F862CE0B11C00A71737 /* AppFilterModel.swift in Sources */,
 				863C0DFD2CCE19320014D531 /* Forgot Password Step 4.swift in Sources */,
 				863C0DF12CCE18C80014D531 /* Login or Signup.swift in Sources */,
@@ -477,8 +495,10 @@
 				86B19F9C2CE0B49500A71737 /* BottomNavItem.swift in Sources */,
 				86B19FA02CE0B4D900A71737 /* LikesFilterView.swift in Sources */,
 				863C0DF92CCE19190014D531 /* Forgot Password Step 2.swift in Sources */,
+				86B37C732CE8740D001CC9D5 /* TopNavBar.swift in Sources */,
 				863C0E0B2CCE19D30014D531 /* Customer Profile.swift in Sources */,
 				86B19FA52CE0B51A00A71737 /* PriceFilterView.swift in Sources */,
+				86B37C752CE87533001CC9D5 /* BottomNavBar.swift in Sources */,
 				86B19F942CE0B34A00A71737 /* ContactFilterView.swift in Sources */,
 				86B19F842CE0B0C900A71737 /* ProductModel.swift in Sources */,
 				863C0E052CCE19870014D531 /* Settings.swift in Sources */,
@@ -657,6 +677,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = searchly/Info.plist;
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs access to your calendar to add reminders for products.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "We need to access to unlock via faceid";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to provide relevant location-based search results and services.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -686,6 +709,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = searchly/Info.plist;
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs access to your calendar to add reminders for products.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "We need to access to unlock via faceid";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to provide relevant location-based search results and services.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

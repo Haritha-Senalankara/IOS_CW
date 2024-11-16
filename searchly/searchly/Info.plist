@@ -2,19 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We use your location to provide relevant location-based search results and services.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>This app needs access to your calendar to add reminders for products.</string>
-	<key>GIDClientID</key>
-	<string>733405672900-kpj151vgug7eh7i4mpc6q8hsh6ch3gsd.apps.googleusercontent.com</string>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -26,5 +13,14 @@
 			</array>
 		</dict>
 	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
+	<key>GIDClientID</key>
+	<string>733405672900-kpj151vgug7eh7i4mpc6q8hsh6ch3gsd.apps.googleusercontent.com</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

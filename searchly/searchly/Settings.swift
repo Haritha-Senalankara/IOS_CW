@@ -8,23 +8,23 @@ struct Settings: View {
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
-            HStack {
-                Spacer()
-                
-                Image("notification-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 15)
-                
-                Image("profile-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 20)
-            }
-            .padding(.top, 50)
-            .padding(.bottom, 10)
+//            HStack {
+//                Spacer()
+//                
+//                Image("notification-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 15)
+//                
+//                Image("profile-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 20)
+//            }
+//            .padding(.top, 50)
+//            .padding(.bottom, 10)
             
             // Settings Title
             Text("Settings")
@@ -102,29 +102,29 @@ struct Settings: View {
             .padding(.bottom, 30)
             
             // Bottom Navigation Bar
-            VStack(spacing: 0) {
-                Divider()
-                HStack {
-                    NavigationLink(destination: Home()) {
-                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-                    }
-                    
-                    Spacer()
-                    NavigationLink(destination: Wishlist()) {
-                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-                    }
-                    Spacer()
-                    NavigationLink(destination: Settings()) {
-                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
-                    }
-                }
-                .padding(.horizontal, 40)
-                .padding(.vertical, 10)
-                .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-                .foregroundColor(.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-                .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
-            }
+//            VStack(spacing: 0) {
+//                Divider()
+//                HStack {
+//                    NavigationLink(destination: Home()) {
+//                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+//                    }
+//                    
+//                    Spacer()
+//                    NavigationLink(destination: Wishlist()) {
+//                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
+//                    }
+//                    Spacer()
+//                    NavigationLink(destination: Settings()) {
+//                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
+//                    }
+//                }
+//                .padding(.horizontal, 40)
+//                .padding(.vertical, 10)
+//                .background(Color(hexValue: "#102A36")) // Dark color as per style guide
+//                .foregroundColor(.white)
+//                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
+//                .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
+//            }
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -147,12 +147,17 @@ struct Settings: View {
             // Clear user ID from UserDefaults
             UserDefaults.standard.removeObject(forKey: "userID")
             
+            // Clear Keychain data
+//            KeychainHelper.shared.delete(key: "authenticatedUser")
+//            print("Cleared User ID from Keychain.")
+            
             // Navigate to onboarding screen
             navigateToOnboarding = true
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
         }
     }
+
 }
 
 // Custom extension for color initialization using hex values

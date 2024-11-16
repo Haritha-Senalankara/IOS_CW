@@ -10,6 +10,12 @@ import FirebaseFirestore
 import EventKit
 
 struct Product_Page: View {
+    // MARK: - Share Sheet Properties
+    @State private var showShareSheet: Bool = false
+    
+    @State private var product_img: String = "" // Initialize as empty string
+    @State private var seller_profile_img_link: String = "" // Initialize as empty string
+
     @State private var isLoading: Bool = true // Show loading indicator
     let productID: String // Accept product ID as a parameter
     @State private var isExpanded: Bool = false
@@ -36,9 +42,8 @@ struct Product_Page: View {
     @State private var product_dislikes: Int = 1
     @State private var product_ratings: Double = 4.5 // Average rating
     @State private var product_desc: String = "..."
-    @State private var product_img: String = "..."
-    @State private var seller_profile_img_link: String = "..."
-    @State private var product_price: Int = 120000
+    
+    @State private var product_price: String = ""
 
     @State private var otherProducts: [Products] = []
 
@@ -49,42 +54,87 @@ struct Product_Page: View {
     @State private var userID: String = ""
     
     @State private var searchText: String = ""
+
+    @State private var navigateToProfile = false
+    @State private var navigateToNotification = false
+    
+    @State private var displayedReviews: [Review] = []
+    @State private var reviewsToShow: Int = 5 // Number of reviews to show initially
+
+    
+    // MARK: - Alert Properties
+    @State private var showingAlert: Bool = false
+    @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
+    
+    // MARK: - Pagination State Variables
+    @State private var lastReviewDocument: DocumentSnapshot? = nil
+    @State private var isLoadingMore: Bool = false
+    @State private var allReviewsLoaded: Bool = false
+    let pageSize = 5 // Number of reviews per page
+
+    private var formattedPrice: String {
+        // Attempt to convert price string to Double
+        if let priceDouble = Double(product_price) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.minimumFractionDigits = 2
+            formatter.maximumFractionDigits = 2
+            if let formatted = formatter.string(from: NSNumber(value: priceDouble)) {
+                return "Rs." + formatted
+            } else {
+                // If formatting fails, return the original price and log the issue
+                print("NumberFormatter failed to format the price: \(priceDouble)")
+                return product_price
+            }
+        } else {
+            // If conversion fails, log the reason and return the original price string
+//            print("Failed to convert price string '\(price)' to Double.")
+            return product_price
+        }
+    }
     
     var body: some View {
         NavigationView{
             ZStack {
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Top Navigation Bar
-                        HStack {
-                            Spacer()
-                            
-                            Image("notification-icon")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                                .padding(.trailing, 15)
-                            
-                            Image("profile-icon")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                                .padding(.trailing, 20)
-                        }
-                        .padding(.top, 50)
-                        .padding(.bottom, 10)
+                        Spacer()
+                        Spacer()
+                        TopNavBar(
+                            searchText: $searchText,
+                            onProfileTap: {
+                                navigateToProfile = true
+                            },
+                            onNotificationTap: {
+                                navigateToNotification = true
+                            },
+                            showSearch: false
+                        )
+                        Spacer()
                         
                         // Product Image
-                        AsyncImage(url: URL(string: product_img)) { image in
-                            image
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 250)
-                                .padding(.horizontal, 20)
-                        } placeholder: {
-                            Color.gray
-                                .frame(height: 250)
-                                .padding(.horizontal, 20)
+                        AsyncImage(url: URL(string: product_img)) { phase in
+                            switch phase {
+                            case .empty:
+                                Color.gray
+                                    .frame(height: 250)
+                                    .padding(.horizontal, 20)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 250)
+                                    .padding(.horizontal, 20)
+                            case .failure:
+                                Image(systemName: "photo") // Use a system image or your default image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 250)
+                                    .padding(.horizontal, 20)
+                            @unknown default:
+                                EmptyView()
+                            }
                         }
                         
                         // Product Info Section
@@ -108,17 +158,29 @@ struct Product_Page: View {
                             
                             HStack {
                                 HStack {
-                                    AsyncImage(url: URL(string: seller_profile_img_link)) { image in
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 20, height: 20)
-                                            .clipped()
-                                            .cornerRadius(10)
-                                    } placeholder: {
-                                        Color.gray
-                                            .frame(width: 20, height: 20)
-                                            .cornerRadius(10)
+                                    AsyncImage(url: URL(string: seller_profile_img_link)) { phase in
+                                        switch phase {
+                                        case .empty:
+                                            Color.gray
+                                                .frame(width: 20, height: 20)
+                                                .cornerRadius(10)
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 20, height: 20)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                        case .failure:
+                                            Image(systemName: "person.crop.circle.fill") // Default profile image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 20, height: 20)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                        @unknown default:
+                                            EmptyView()
+                                        }
                                     }
 
                                     // NavigationLink for seller name
@@ -135,7 +197,7 @@ struct Product_Page: View {
 
                                 Spacer()
 
-                                Text("Rs." + String(product_price))
+                                Text(String(formattedPrice))
                                     .font(.custom("Heebo-Bold", size: 16))
                                     .foregroundColor(Color(hexValue: "#F2A213"))
                             }
@@ -165,6 +227,7 @@ struct Product_Page: View {
                                         .onTapGesture {
                                             withAnimation {
                                                 showRatingInput.toggle() // Toggle the rating input modal
+                                                showReviews.toggle()// Show reviews when rating input is toggled
                                             }
                                         }
                                     
@@ -178,28 +241,29 @@ struct Product_Page: View {
                                 .padding(.top, 5)
                             }
                             
+                            // Customer Reviews Section with Pagination
                             if showReviews {
                                 VStack(alignment: .leading) {
                                     Text("Customer Reviews")
                                         .font(.headline)
                                         .padding()
-                                    
+
                                     ForEach(reviews) { review in
                                         VStack(alignment: .leading) {
                                             HStack {
+                                                Text(review.userName)
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.black) // Optional: Make the username stand out
+                                                Spacer()
                                                 Text("\(review.rating) ★")
                                                     .font(.subheadline)
                                                     .foregroundColor(.yellow)
-                                                
-                                                Spacer()
-                                                
-                                                Text("User: \(review.userID)")
-                                                    .font(.caption)
-                                                    .foregroundColor(.gray)
                                             }
-                                            
+
                                             Text(review.comment)
                                                 .padding(.top, 5)
+                                                .font(.body)
+                                                .foregroundColor(.gray)
                                         }
                                         .padding()
                                         .background(Color.white)
@@ -208,8 +272,27 @@ struct Product_Page: View {
                                         .padding(.horizontal)
                                         .padding(.bottom, 10)
                                     }
+
+                                    // Load More Button for Pagination
+                                    if !allReviewsLoaded {
+                                        Button(action: {
+                                            loadMoreReviews()
+                                        }) {
+                                            if isLoadingMore {
+                                                ProgressView()
+                                                    .padding()
+                                            } else {
+                                                Text("Load More")
+                                                    .font(.custom("Heebo-Regular", size: 14))
+                                                    .foregroundColor(.blue)
+                                                    .padding()
+                                            }
+                                        }
+                                        .padding(.bottom, 10)
+                                    }
                                 }
                             }
+
                             
                             
                             if showRatingInput {
@@ -231,7 +314,7 @@ struct Product_Page: View {
                                     
                                     Button("Submit") {
                                         addReview() // Call the function to save the review
-                                        showRatingInput = false
+//                                        showRatingInput = false
                                     }
                                     .foregroundColor(.white)
                                     .padding()
@@ -329,7 +412,7 @@ struct Product_Page: View {
                                                 imageName: product.imageName,
                                                 name: product.name,
                                                 siteName: product.siteName,
-                                                price: "Rs.\(Int(product.price))",
+                                                price: "\(Int(product.price))",
                                                 likes: "\(product.likes)",
                                                 rating: String(format: "%.1f", product.rating)
                                             )
@@ -344,6 +427,7 @@ struct Product_Page: View {
                 }
                 .background(Color.white)
                 .edgesIgnoringSafeArea(.all)
+                
             }
             .onAppear {
                 // Get user ID from UserDefaults
@@ -357,71 +441,286 @@ struct Product_Page: View {
 
                 fetchProductDetails()
                 fetchOtherProducts()
+                fetchReviews()
+            }
+            // Sheets for Profile and Notifications
+            .sheet(isPresented: $navigateToProfile) {
+                Customer_Profile()
+            }
+            .sheet(isPresented: $navigateToNotification) {
+                Notifications()
+            }
+            .alert(isPresented: $showingAlert) {
+                Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = URL(string: product_img) {
+                    ShareSheet(items: [product_name, url])
+                } else {
+                    ShareSheet(items: [product_name]) // Share only product name if URL is invalid
+                }
             }
         }
     
-    private func shareProduct() {
-        let activityVC = UIActivityViewController(activityItems: [product_name, URL(string: product_img)!], applicationActivities: nil)
-        UIApplication.shared.windows.first?.rootViewController?.present(activityVC, animated: true, completion: nil)
-    }
-
-    private func addReview() {
-        guard !userID.isEmpty else { return }
-
-        let reviewID = UUID().uuidString
-        let reviewData: [String: Any] = [
-            "userID": userID,
-            "rating": userRating,
-            "comment": userComment
-        ]
-
-        db.collection("products").document(productID).collection("reviews").document(reviewID).setData(reviewData) { error in
-            if let error = error {
-                print("Error adding review: \(error.localizedDescription)")
-                return
-            }
-
-            // Update the user's profile with the review
-            db.collection("customers").document(userID).updateData([
-                "reviews": FieldValue.arrayUnion([reviewID])
-            ])
-
-            // Fetch the updated reviews
-            fetchReviews()
-        }
-    }
-
-    private func fetchReviews() {
+    // MARK: - Recalculate Average Rating Function
+    // MARK: - Recalculate Average Rating Function
+    private func recalculateAverageRating() {
         db.collection("products").document(productID).collection("reviews").getDocuments { snapshot, error in
             if let error = error {
-                print("Error fetching reviews: \(error)")
+                print("Error fetching reviews for rating recalculation: \(error)")
+                showAlert(title: "Error", message: "Failed to recalculate rating.")
+                isLoading = false
                 return
             }
 
             guard let documents = snapshot?.documents else {
-                print("No reviews found")
+                print("No reviews data found for product ID: \(productID)")
+                showAlert(title: "Error", message: "No reviews found.")
+                isLoading = false
                 return
             }
 
-            DispatchQueue.main.async {
-                self.reviews = documents.map { doc -> Review in
-                    let data = doc.data()
-                    
-                    // Convert rating to Double, then to Int if needed
-                    let ratingString = data["rating"] as? String ?? "\(data["rating"] as? Double ?? 0.0)"
-                    let ratingDouble = Double(ratingString) ?? 0.0
-                    let rating = Int(ratingDouble) // Convert to Int if needed
+            let totalRatings = documents.compactMap { $0.data()["rating"] as? Int }.reduce(0, +)
+            let count = documents.count
+            let average = count > 0 ? Double(totalRatings) / Double(count) : 0.0
 
-                    return Review(
-                        id: doc.documentID,
-                        userID: data["userID"] as? String ?? "Unknown User",
-                        rating: rating, // Ensure this matches the type in the Review struct
-                        comment: data["comment"] as? String ?? "No comment"
-                    )
+            print("Total Ratings: \(totalRatings), Count: \(count), Average: \(average)")
+
+            // Update the average rating in the product document
+            db.collection("products").document(productID).updateData([
+                "rating": average
+            ]) { error in
+                if let error = error {
+                    print("Error updating average rating: \(error.localizedDescription)")
+                    showAlert(title: "Error", message: "Failed to update rating.")
+                    isLoading = false
+                    return
+                }
+
+                // Update local state
+                DispatchQueue.main.async {
+                    self.product_ratings = average
+                    self.userRating = 5
+                    self.userComment = ""
+                    self.showRatingInput = false
+                    showAlert(title: "Success", message: "Your review has been added.")
+                    isLoading = false
+                    fetchReviews()
+                    showReviews = true // Ensure reviews are shown after adding a review
                 }
             }
         }
     }
+
+
+
+    
+    private func shareProduct() {
+        showShareSheet = true
+    }
+
+    private func addReview() {
+        guard !userID.isEmpty else {
+            showAlert(title: "Error", message: "You must be logged in to add a review.")
+            return
+        }
+        
+        print("Submitting review with comment: \(userComment)")
+        
+        // Prevent multiple reviews
+        if reviews.contains(where: { $0.userID == userID }) {
+            showAlert(title: "Error", message: "You have already submitted a review for this product.")
+            return
+        }
+
+        isLoading = true
+        
+        print("Fetching user data from Firestore")
+        
+        // Fetch the user's name from the "customers" collection
+        db.collection("customers").document(userID).getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching user data: \(error)")
+                showAlert(title: "Error", message: "Failed to fetch user data.")
+                isLoading = false
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let userName = data["name"] as? String else {
+                print("No customer data found for ID: \(userID)")
+                showAlert(title: "Error", message: "User data not found.")
+                isLoading = false
+                return
+            }
+            
+            print("User name retrieved: \(userName)")
+            
+            let reviewID = UUID().uuidString
+            let reviewData: [String: Any] = [
+                "userID": userID,
+                "userName": userName,
+                "rating": userRating,
+                "comment": userComment,
+                "timestamp": Timestamp() // Added timestamp for ordering
+            ]
+            
+            print("Adding review to Firestore with ID: \(reviewID)")
+            
+            // Add the new review to the "reviews" subcollection
+            db.collection("products").document(productID).collection("reviews").document(reviewID).setData(reviewData) { error in
+                if let error = error {
+                    print("Error adding review: \(error.localizedDescription)")
+                    showAlert(title: "Error", message: "Failed to add review.")
+                    isLoading = false
+                    return
+                }
+
+                print("Review added successfully. Updating user's review list.")
+                
+                // Optionally, update the user's profile with the review ID
+                db.collection("customers").document(userID).updateData([
+                    "reviews": FieldValue.arrayUnion([reviewID])
+                ]) { error in
+                    if let error = error {
+                        print("Error updating user's review list: \(error.localizedDescription)")
+                        // Optionally handle the error
+                    }
+                }
+
+                // Recalculate the average rating after adding the review
+                recalculateAverageRating()
+            }
+        }
+    }
+
+
+
+    private func fetchReviews() {
+        isLoading = true
+        db.collection("products").document(productID).collection("reviews")
+            .order(by: "timestamp", descending: true)
+            .limit(to: pageSize)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error fetching reviews: \(error)")
+                    showAlert(title: "Error", message: "Failed to fetch reviews.")
+                    isLoading = false
+                    return
+                }
+
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    print("No reviews found")
+//                    showAlert(title: "Info", message: "No reviews yet.")
+                    isLoading = false
+                    allReviewsLoaded = true
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self.reviews = documents.map { doc -> Review in
+                        let data = doc.data()
+
+                        let rating = data["rating"] as? Int ?? 0
+                        let comment = data["comment"] as? String ?? "No comment"
+                        let userName = data["userName"] as? String ?? "Anonymous"
+                        let timestamp = data["timestamp"] as? Timestamp ?? Timestamp()
+
+                        return Review(
+                            id: doc.documentID,
+                            userID: data["userID"] as? String ?? "Unknown User",
+                            userName: userName,
+                            rating: rating,
+                            comment: comment,
+                            timestamp: timestamp
+                        )
+                    }
+
+                    if let lastDoc = documents.last {
+                        self.lastReviewDocument = lastDoc
+                    }
+
+                    if documents.count < pageSize {
+                        self.allReviewsLoaded = true
+                    }
+
+//                    showReviews = true
+                }
+
+                isLoading = false
+            }
+    }
+    
+    // MARK: - Show Alert Function using SwiftUI's native Alert
+    private func showAlert(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showingAlert = true
+    }
+    
+    // MARK: - Load More Reviews Function for Pagination
+    private func loadMoreReviews() {
+        guard !allReviewsLoaded && !isLoadingMore else { return }
+        isLoadingMore = true
+
+        guard let lastDoc = lastReviewDocument else {
+            isLoadingMore = false
+            return
+        }
+
+        db.collection("products").document(productID).collection("reviews")
+            .order(by: "timestamp", descending: true)
+            .start(afterDocument: lastDoc)
+            .limit(to: pageSize)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error fetching more reviews: \(error)")
+                    showAlert(title: "Error", message: "Failed to load more reviews.")
+                    isLoadingMore = false
+                    return
+                }
+
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    print("No more reviews to load")
+                    allReviewsLoaded = true
+                    isLoadingMore = false
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    let newReviews = documents.map { doc -> Review in
+                        let data = doc.data()
+
+                        let rating = data["rating"] as? Int ?? 0
+                        let comment = data["comment"] as? String ?? "No comment"
+                        let userName = data["userName"] as? String ?? "Anonymous"
+                        let timestamp = data["timestamp"] as? Timestamp ?? Timestamp()
+
+                        return Review(
+                            id: doc.documentID,
+                            userID: data["userID"] as? String ?? "Unknown User",
+                            userName: userName,
+                            rating: rating,
+                            comment: comment,
+                            timestamp: timestamp
+                        )
+                    }
+
+                    self.reviews.append(contentsOf: newReviews)
+
+                    if let lastDoc = documents.last {
+                        self.lastReviewDocument = lastDoc
+                    }
+
+                    if documents.count < pageSize {
+                        self.allReviewsLoaded = true
+                    }
+                }
+
+                isLoadingMore = false
+            }
+    }
+
     
     private func addReminder() {
         eventStore.requestAccess(to: .event) { granted, error in
@@ -467,14 +766,14 @@ struct Product_Page: View {
             }
         }
 
-    private func showAlert(title: String, message: String) {
-            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-
-            if let rootViewController = UIApplication.shared.windows.first?.rootViewController {
-                rootViewController.present(alert, animated: true, completion: nil)
-            }
-        }
+//    private func showAlert(title: String, message: String) {
+//            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+//            alert.addAction(UIAlertAction(title: "OK", style: .default))
+//
+//            if let rootViewController = UIApplication.shared.windows.first?.rootViewController {
+//                rootViewController.present(alert, animated: true, completion: nil)
+//            }
+//        }
     
     private func fetchProductDetails() {
         db.collection("products").document(productID).getDocument { snapshot, error in
@@ -497,7 +796,7 @@ struct Product_Page: View {
                 product_ratings = Double(data["rating"] as? String ?? "\(data["rating"] as? Double ?? 0.0)") ?? 0.0
                 product_desc = data["description"] as? String ?? "No description available."
                 product_img = data["product_image"] as? String ?? ""
-                product_price = Int(data["price"] as? String ?? "\(data["price"] as? Int ?? 0)") ?? 0
+                product_price = data["price"] as? String ?? ""
 
                 if let sellerID = data["seller_id"] as? String {
                     fetchSellerProfile(sellerID: sellerID)
@@ -749,7 +1048,6 @@ struct Product_Page: View {
             }
         }
     }
-    
 }
 
 // Utility to create a color from hex value
@@ -768,10 +1066,26 @@ extension Color {
         self.init(red: red, green: green, blue: blue)
     }
 }
+// MARK: - ShareSheet for UIActivityViewController
+struct ShareSheet: UIViewControllerRepresentable {
+    var items: [Any]
+    var activities: [UIActivity]? = nil
+    var completion: ((Bool) -> Void)? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: activities)
+        controller.completionWithItemsHandler = { activity, success, items, error in
+            completion?(success)
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
 
 // Preview Provider
 struct Product_Page_Previews: PreviewProvider {
     static var previews: some View {
-        Product_Page(productID: "AqLHYVv64EVezlPHmyQ6")
+        Product_Page(productID: "gevuOhO09Nn2Bqs2NzlY")
     }
 }

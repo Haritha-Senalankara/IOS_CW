@@ -18,25 +18,25 @@ struct Notifications: View {
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
-            HStack {
-                
-                
-                Spacer()
-                
-                Image("notification-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 15)
-                
-                Image("profile-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 20)
-            }
-            .padding(.top, 50)
-            .padding(.bottom, 10)
+//            HStack {
+//                
+//                
+//                Spacer()
+//                
+//                Image("notification-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 15)
+//                
+//                Image("profile-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 20)
+//            }
+//            .padding(.top, 50)
+//            .padding(.bottom, 10)
             
             // Notification List
             VStack(spacing: 0) {

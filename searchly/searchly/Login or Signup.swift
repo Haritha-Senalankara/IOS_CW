@@ -1,21 +1,17 @@
-//
-//  Login or Signup.swift
-//  searchly
-//
-//  Created by cobsccompy4231p-007 on 2024-10-27.
-//
-
 import SwiftUI
 import FirebaseAuth
 import GoogleSignIn
 import GoogleSignInSwift
 import FirebaseFirestore
+import LocalAuthentication
+import Security
+import Foundation // Ensure this import is present
 
 struct Login_or_Signup: View {
     @State private var errorMessage: String = ""
     @State private var showAlert = false
-    @State private var navigateToEmailLogin = false // State for navigation to email login
-    private let db = Firestore.firestore() // Firestore reference
+    @State private var navigateToEmailLogin = false
+    private let db = Firestore.firestore()
     @State private var navigateToHome = false
     
     var body: some View {
@@ -23,7 +19,7 @@ struct Login_or_Signup: View {
             VStack(spacing: 20) {
                 Spacer()
                 
-                Image("App Logo") // Make sure this matches the image in your assets
+                Image("App Logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 133, height: 121)
@@ -44,6 +40,7 @@ struct Login_or_Signup: View {
                 Spacer()
                 
                 VStack(spacing: 15) {
+                    // Apple Login Button (Implementation needed)
                     Button(action: {
                         // Apple login action
                     }) {
@@ -63,6 +60,7 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                     
+                    // Google Login Button
                     Button(action: {
                         signInWithGoogle()
                     }) {
@@ -84,11 +82,12 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                     .alert(isPresented: $showAlert) {
-                        Alert(title: Text("Google Sign-In"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                        Alert(title: Text("Authentication Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                     }
                     
+                    // Email Login Button
                     Button(action: {
-                        navigateToEmailLogin = true // Navigate to email login
+                        navigateToEmailLogin = true
                     }) {
                         HStack {
                             Image("Email Logo")
@@ -107,50 +106,64 @@ struct Login_or_Signup: View {
                         .foregroundColor(Color(hex: "#F2A213"))
                     }
                     .padding(.horizontal, 30)
+                    
+                    // Face ID Authentication Button
+                    Button(action: {
+                        authenticateWithFaceID()
+                    }) {
+                        HStack {
+                            Image(systemName: "faceid")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                            Text("Continue with Face ID")
+                                .font(.custom("Heebo-Bold", size: 17))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal, 30)
                 }
-                .padding(.bottom, 110)
+                .padding(.bottom, 50)
                 
-//                Button(action: {
-//                    // Skip action
-//                }) {
-//                    Text("I'll do it later")
-//                        .font(.custom("Heebo-Regular", size: 14))
-//                        .foregroundColor(Color(hex: "#102A36"))
-//                }
-//                .padding(.top, 10)
-//                
-//                Spacer()
                 Spacer(minLength: 100)
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
             .background(
                 NavigationLink(
-                    destination: Login_Via_Email(), // Navigate to the Login_Via_Email view
+                    destination: Login_Via_Email(),
                     isActive: $navigateToEmailLogin
                 ) {
                     EmptyView()
                 }
                 .hidden()
-                
-                
             )
             .background(
                 NavigationLink(
-                    destination: Home(), // Navigate to the Login_Via_Email view
+                    destination: Home(),
                     isActive: $navigateToHome
                 ) {
                     EmptyView()
                 }
                 .hidden()
             )
-            
+            .onAppear {
+                if let userIDData = KeychainHelper.shared.read(key: "authenticatedUser"),
+                   let userID = String(data: userIDData, encoding: .utf8) {
+                    authenticateWithFaceID()
+                }
+            }
         }
-        .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
+        .navigationViewStyle(StackNavigationViewStyle())
         .navigationBarBackButtonHidden(true)
-
     }
-
+    
+    // MARK: - Google Sign-In
+    
     func signInWithGoogle() {
         guard let presentingViewController = UIApplication.shared.windows.first?.rootViewController else {
             self.errorMessage = "Unable to access root view controller."
@@ -180,12 +193,13 @@ struct Login_or_Signup: View {
                     return
                 }
 
-                // Successfully signed in
                 if let authUser = authResult?.user {
-                    // Save user ID locally
+                    // Store userID securely in Keychain
+                    storeUserID(authUser.uid)
+
+                    // Optionally store in UserDefaults for quick access
                     UserDefaults.standard.set(authUser.uid, forKey: "userID")
 
-                    // Check if user already exists in Firestore
                     checkUserExistsAndSave(
                         userID: authUser.uid,
                         email: authUser.email ?? "Unknown Email",
@@ -200,6 +214,8 @@ struct Login_or_Signup: View {
         }
     }
 
+    // MARK: - User Existence Check and Save
+    
     func checkUserExistsAndSave(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
         db.collection("customers").document(userID).getDocument { document, error in
             if let error = error {
@@ -210,7 +226,6 @@ struct Login_or_Signup: View {
             if let document = document, document.exists {
                 print("User already exists in Firestore.")
             } else {
-                // User does not exist, save the new user
                 saveUserToFirestore(userID: userID, email: email, firstName: firstName, lastName: lastName, profileImage: profileImage)
             }
         }
@@ -219,7 +234,7 @@ struct Login_or_Signup: View {
     func saveUserToFirestore(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
         let userData: [String: Any] = [
             "email_address": email,
-            "name": firstName + " " + lastName,
+            "name": "\(firstName) \(lastName)",
             "profile_image": profileImage,
             "created_at": Timestamp()
         ]
@@ -232,9 +247,49 @@ struct Login_or_Signup: View {
             }
         }
     }
+    
+    // MARK: - Face ID Authentication
+    
+    func authenticateWithFaceID() {
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            let reason = "Authenticate to access your account"
+            
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+                DispatchQueue.main.async {
+                    if success {
+                        if let userIDData = KeychainHelper.shared.read(key: "authenticatedUser"),
+                           let userID = String(data: userIDData, encoding: .utf8) {
+                            print("Authenticated User ID: \(userID)")
+                            UserDefaults.standard.set(userID, forKey: "userID")
+                            self.navigateToHome = true
+                        } else {
+                            self.errorMessage = "No authenticated user found."
+                            self.showAlert = true
+                        }
+                    } else {
+                        self.errorMessage = "Face ID Authentication failed."
+                        self.showAlert = true
+                    }
+                }
+            }
+        } else {
+            self.errorMessage = "Face ID not available on this device."
+            self.showAlert = true
+        }
+    }
 
+    
+    // MARK: - Helper Function to Store User ID
+    
+    func storeUserID(_ userID: String) {
+        let userIDData = Data(userID.utf8)
+        KeychainHelper.shared.save(key: "authenticatedUser", data: userIDData)
+        print("User ID saved to Keychain: \(userID)")
+    }
 }
-
 
 extension Color {
     init(hex: String) {
@@ -255,3 +310,4 @@ extension Color {
 #Preview {
     Login_or_Signup()
 }
+

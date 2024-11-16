@@ -6,11 +6,23 @@
 //
 
 import Foundation
+import SwiftUI
+import FirebaseFirestore
+import EventKit
+//// Review Model
+//struct Review: Identifiable {
+//    var id: String
+//    var userID: String
+//    var rating: Int
+//    var comment: String
+//}
 
-// Review Model
+
 struct Review: Identifiable {
     var id: String
     var userID: String
+    var userName: String
     var rating: Int
     var comment: String
+    var timestamp: Timestamp // Added timestamp for pagination
 }

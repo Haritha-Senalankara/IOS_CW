@@ -25,30 +25,44 @@ struct Seller_Profile: View {
     private let db = Firestore.firestore()
     let sellerID: String
     
+    @State private var searchText: String = ""
+    @State private var navigateToProfile = false
+    @State private var navigateToNotification = false
+    
     @StateObject private var viewModel = ProductViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
-            HStack {
-                
-                Spacer()
-                
-                Image("notification-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 15)
-                
-                Image("profile-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 20)
-            }
-            .padding(.top, 50)
-            .padding(.bottom, 10)
-            
+//            HStack {
+//                
+//                Spacer()
+//                
+//                Image("notification-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 15)
+//                
+//                Image("profile-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 20)
+//            }
+//            .padding(.top, 50)
+//            .padding(.bottom, 10)
+            TopNavBar(
+                searchText: $searchText,
+                onProfileTap: {
+                    navigateToProfile = true
+                },
+                onNotificationTap: {
+                    navigateToNotification = true
+                },
+                showSearch: false
+            )
+            Spacer()
             ScrollView{
                 // Seller Logo
                 AsyncImage(url: URL(string: seller_profile_img_link)) { image in
@@ -184,20 +198,20 @@ struct Seller_Profile: View {
             Spacer()
             
             // Bottom Navigation Bar
-            Divider()
-            HStack {
-                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-                Spacer()
-                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-                Spacer()
-                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
-            }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 10)
-            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20)
+//            Divider()
+//            HStack {
+//                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+//                Spacer()
+//                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
+//                Spacer()
+//                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
+//            }
+//            .padding(.horizontal, 40)
+//            .padding(.vertical, 10)
+//            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
+//            .foregroundColor(.white)
+//            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
+//            .padding(.bottom, 20)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -205,7 +219,15 @@ struct Seller_Profile: View {
             fetchSellerData()
             viewModel.fetchProducts(sellerID: sellerID)
         }
-        .navigationBarBackButtonHidden(true)
+//        .navigationBarBackButtonHidden(true)
+        
+        // Sheets for Profile and Notifications
+        .sheet(isPresented: $navigateToProfile) {
+            Customer_Profile()
+        }
+        .sheet(isPresented: $navigateToNotification) {
+            Notifications()
+        }
     }
     
     private func openMaps(for location: CLLocationCoordinate2D) {

@@ -32,138 +32,110 @@ struct Home: View {
     @State private var showContactFilter = false
     @State private var selectedContactMethodFilters: [String] = [] // Selected contact method filter IDs
     
-    @State private var searchText: String = ""
-    @State private var navigateToProfile = false // State to handle profile navigation
-    @State private var navigateToNotification = false
     
+    // Navigation States
+    @State private var searchText: String = ""
+    @State private var selectedTab: BottomNavBar.NavTab = .home
+    @State private var navigateToProfile = false
+    @State private var navigateToNotification = false
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Top Navigation Bar
-                HStack {
-                    HStack {
-                        Image("search")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 18, height: 18)
-                            .padding(.leading, 8)
-                        
-                        TextField("Search", text: $searchText)
-                            .padding(10)
-                            .onChange(of: searchText) { newValue in
-                                viewModel.searchText = newValue
-                                viewModel.applyFilters()
-                            }
+                // Inside your Home view's body, where you initialize TopNavBar
+                TopNavBar(
+                    searchText: $searchText,
+                    onProfileTap: {
+                        navigateToProfile = true
+                    },
+                    onNotificationTap: {
+                        navigateToNotification = true
+                    },
+                    onSearchBarTap: {
+                        if selectedTab != .home {
+                            selectedTab = .home
+                        }
                     }
-                    .background(Color(hex: "#F7F7F7"))
-                    .cornerRadius(8)
-                    .padding(.leading, 20)
-                    .frame(height: 40)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        navigateToNotification = true // Trigger navigation to the profile page
-                    }) {
-                        Image("notification-icon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .padding(.trailing, 15)
-                    }
-                    
-                    
-                    Button(action: {
-                        navigateToProfile = true // Trigger navigation to the profile page
-                    }) {
-                        Image("profile-icon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .padding(.trailing, 20)
-                    }
-                }
-                .padding(.top, 50)
-                .padding(.bottom, 10)
+                )
                 
-                // Filter Buttons
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    FilterButton(iconName: "location-icon", title: "Location") {
-                        showLocationFilter = true
-                    }
-                    FilterButton(iconName: "price-icon", title: "Price") {
-                        showPriceFilter = true
-                    }
-                    FilterButton(iconName: "rating-icon", title: "Rating") {
-                        showRatingFilter = true
-                    }
-                    FilterButton(iconName: "like-icon", title: "Likes") {
-                        showLikesFilter = true
-                    }
-                    FilterButton(iconName: "app-icon-filter", title: "App") {
-                        showAppFilter = true
-                    }
-                    FilterButton(iconName: "contact-icon", title: "Contact") {
-                        showContactFilter = true
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                
-                Divider()
-                
-                // Product Listings
-                ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                        ForEach(viewModel.products) { product in
-                            NavigationLink(destination: Product_Page(productID: product.id)) {
-                                ProductCard(
-                                    imageName: product.imageName,
-                                    name: product.name,
-                                    siteName: product.siteName,
-                                    price: "Rs.\(Int(product.price))",
-                                    likes: "\(product.likes)",
-                                    rating: String(format: "%.1f", product.rating)
-                                )
-                            }
+                // Conditionally Display Content Based on Selected Tab
+                if selectedTab == .home {
+                    // Filter Buttons
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        FilterButton(iconName: "location-icon", title: "Location") {
+                            showLocationFilter = true
+                        }
+                        FilterButton(iconName: "price-icon", title: "Price") {
+                            showPriceFilter = true
+                        }
+                        FilterButton(iconName: "rating-icon", title: "Rating") {
+                            showRatingFilter = true
+                        }
+                        FilterButton(iconName: "like-icon", title: "Likes") {
+                            showLikesFilter = true
+                        }
+                        FilterButton(iconName: "app-icon-filter", title: "App") {
+                            showAppFilter = true
+                        }
+                        FilterButton(iconName: "contact-icon", title: "Contact") {
+                            showContactFilter = true
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 10)
+                    .padding(.vertical, 10)
+                    
+                    Divider()
+                    
+                    // Product Listings
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                            ForEach(viewModel.products) { product in
+                                NavigationLink(value: product.id) { // Use 'value' instead of 'destination'
+                                    ProductCard(
+                                        imageName: product.imageName,
+                                        name: product.name,
+                                        siteName: product.siteName,
+                                        price: "\(Int(product.price))",
+                                        likes: "\(product.likes)",
+                                        rating: String(format: "%.1f", product.rating)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle()) // Optional: Remove default button styling
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    }
+                } else if selectedTab == .favorites {
+                    // Favorites Content
+                    Wishlist()
+                } else if selectedTab == .settings {
+                    // Settings Content
+                    Settings()
                 }
                 
-                Spacer() // Ensures content pushes the bottom navigation bar to the bottom
+                Spacer() // Pushes content to the top
                 
                 // Bottom Navigation Bar
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        NavigationLink(destination: Home()) {
-                            BottomNavItem(iconName: "home-icon", title: "Home", isActive: true)
-                        }
-                        
-                        Spacer()
-                        
-                        NavigationLink(destination: Wishlist()) {
-                            BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-                        }
-                        
-                        Spacer()
-                        
-                        NavigationLink(destination: Settings()) {
-                            BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
-                        }
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 10)
-                    .background(Color(hex: "#102A36"))
-                    .foregroundColor(.white)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-                    .padding(.bottom, 30) // Space for home indicator or safe area
+                BottomNavBar(selectedTab: selectedTab) { tab in
+                    selectedTab = tab
                 }
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
+            // Navigation Destinations for Product Pages
+            .navigationDestination(for: String.self) { productID in
+                Product_Page(productID: productID)
+            }
+            // Sheets for Profile and Notifications
+            .sheet(isPresented: $navigateToProfile) {
+                Customer_Profile()
+            }
+            .sheet(isPresented: $navigateToNotification) {
+                Notifications()
+            }
+            // Sheets for Filters
             .sheet(isPresented: $showLocationFilter) {
                 LocationFilterView(
                     selectedLocation: $selectedLocation,
@@ -225,30 +197,21 @@ struct Home: View {
                     }
                 }
             }
-            .background(
-                NavigationLink(
-                    destination: Customer_Profile(), // Navigate to Customer_Profile view
-                    isActive: $navigateToProfile
-                ) {
-                    EmptyView()
-                }
-                .hidden()
-            )
-            .background(
-                NavigationLink(
-                    destination: Notifications(), // Navigate to Customer_Profile view
-                    isActive: $navigateToNotification
-                ) {
-                    EmptyView()
-                }
-                .hidden()
-            )
+            // After your existing modifiers in the Home view, add:
+            .onChange(of: searchText) { newValue in
+                viewModel.searchText = newValue
+                viewModel.applyFilters()
+            }
         }
-        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true) // Hide the default navigation bar
     }
+    
+    
 }
 
 // MARK: - Preview
-#Preview {
-    Home()
+struct Home_Previews: PreviewProvider {
+    static var previews: some View {
+        Home()
+    }
 }

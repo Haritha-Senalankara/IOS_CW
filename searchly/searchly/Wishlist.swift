@@ -15,27 +15,27 @@ struct Wishlist: View {
     var body: some View {
         VStack(spacing: 0) {
             // Top Navigation Bar
-            HStack {
-                Spacer()
-                
-                Image("notification-icon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .padding(.trailing, 15)
-                
-                Button(action: {
-                    navigateToProfile = true // Trigger navigation to the profile page
-                }) {
-                    Image("profile-icon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .padding(.trailing, 20)
-                }
-            }
-            .padding(.top, 50)
-            .padding(.bottom, 10)
+//            HStack {
+//                Spacer()
+//                
+//                Image("notification-icon")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20, height: 20)
+//                    .padding(.trailing, 15)
+//                
+//                Button(action: {
+//                    navigateToProfile = true // Trigger navigation to the profile page
+//                }) {
+//                    Image("profile-icon")
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 20, height: 20)
+//                        .padding(.trailing, 20)
+//                }
+//            }
+//            .padding(.top, 50)
+//            .padding(.bottom, 10)
             
             // Title
             Text("My Wishlist")
@@ -79,32 +79,32 @@ struct Wishlist: View {
             Spacer() // Push the bottom navigation bar to the bottom
             
             // Bottom Navigation Bar
-            VStack(spacing: 0) {
-                Divider()
-                HStack {
-                    NavigationLink(destination: Home()) {
-                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-                    }
-                    
-                    Spacer()
-                    
-                    NavigationLink(destination: Wishlist()) {
-                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: true)
-                    }
-                    
-                    Spacer()
-                    
-                    NavigationLink(destination: Settings()) {
-                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
-                    }
-                }
-                .padding(.horizontal, 40)
-                .padding(.vertical, 10)
-                .background(Color(hexValue: "#102A36"))
-                .foregroundColor(.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-                .padding(.bottom, 30) // Ensure it doesn't overlap with the home indicator
-            }
+//            VStack(spacing: 0) {
+//                Divider()
+//                HStack {
+//                    NavigationLink(destination: Home()) {
+//                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
+//                    }
+//                    
+//                    Spacer()
+//                    
+//                    NavigationLink(destination: Wishlist()) {
+//                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: true)
+//                    }
+//                    
+//                    Spacer()
+//                    
+//                    NavigationLink(destination: Settings()) {
+//                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
+//                    }
+//                }
+//                .padding(.horizontal, 40)
+//                .padding(.vertical, 10)
+//                .background(Color(hexValue: "#102A36"))
+//                .foregroundColor(.white)
+//                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
+//                .padding(.bottom, 30) // Ensure it doesn't overlap with the home indicator
+//            }
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)

@@ -17,13 +17,35 @@ struct ProductCard: View {
     var likes: String
     var rating: String
     
+    // Number formatter for price
+    private var formattedPrice: String {
+        // Attempt to convert price string to Double
+        if let priceDouble = Double(price) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.minimumFractionDigits = 2
+            formatter.maximumFractionDigits = 2
+            if let formatted = formatter.string(from: NSNumber(value: priceDouble)) {
+                return "Rs." + formatted
+            } else {
+                // If formatting fails, return the original price and log the issue
+                print("NumberFormatter failed to format the price: \(priceDouble)")
+                return price
+            }
+        } else {
+            // If conversion fails, log the reason and return the original price string
+            print("Failed to convert price string '\(price)' to Double.")
+            return price
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             AsyncImage(url: URL(string: imageName)) { image in
                 image
                     .resizable()
                     .scaledToFill() // Ensures the image covers the entire frame while maintaining aspect ratio
-                    .frame(width: 120, height: 120) // Adjust the size as per your design
+                    .frame(width: 138, height: 166) // Adjust the size as per your design
                     .clipped() // Clips the overflowing parts to fit the frame
                     .cornerRadius(8)
             } placeholder: {
@@ -41,7 +63,7 @@ struct ProductCard: View {
                 .font(.custom("Heebo-Regular", size: 12))
                 .foregroundColor(.gray)
             
-            Text(price)
+            Text(formattedPrice)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(Color(hex: "#F2A213"))
             

@@ -193,22 +193,76 @@ class ProductViewModel: ObservableObject {
         }
     }
     
-    // Apply filters
     func applyFilters() {
         var filteredProducts = allProducts
-        
+
         // Filter by price range
-        filteredProducts = filteredProducts.filter {
-            $0.price >= selectedMinPrice && $0.price <= selectedMaxPrice
+        filteredProducts = filteredProducts.filter { product in
+            if let productPrice = Double("\(product.price)"),
+               productPrice >= selectedMinPrice && productPrice <= selectedMaxPrice {
+                return true
+            } else {
+                return false
+            }
         }
-        
+
+        // Filter by location
+        if let selectedLocation = selectedLocation, let selectedRadius = selectedRadius {
+            filteredProducts = filteredProducts.filter { product in
+                if let productLocation = product.location {
+                    let productCLLocation = CLLocation(latitude: productLocation.latitude, longitude: productLocation.longitude)
+                    let selectedCLLocation = CLLocation(latitude: selectedLocation.latitude, longitude: selectedLocation.longitude)
+                    let distance = productCLLocation.distance(from: selectedCLLocation)
+                    return distance <= selectedRadius
+                } else {
+                    return false
+                }
+            }
+        }
+
+        // Filter by rating
+        if let selectedRating = selectedRating, selectedRating > 0 {
+            filteredProducts = filteredProducts.filter { product in
+                let productRating = product.rating ?? 0.0 // Default to 0.0 if nil
+                return productRating >= selectedRating
+            }
+        }
+
+        // Filter by likes
+        if let selectedLikes = selectedLikes, selectedLikes > 0 {
+            filteredProducts = filteredProducts.filter { product in
+                // product.likes is already an Int, so no need to convert
+                return product.likes >= selectedLikes
+            }
+        }
+
+        // Filter by app filters
+        if let selectedAppFilters = selectedAppFilters, !selectedAppFilters.isEmpty {
+            filteredProducts = filteredProducts.filter { product in
+                let productAppIDs = product.sellerApps.map { $0.id }
+                return !Set(selectedAppFilters).isDisjoint(with: productAppIDs)
+            }
+        }
+
+        // Filter by contact method filters
+        if let selectedContactMethodFilters = selectedContactMethodFilters, !selectedContactMethodFilters.isEmpty {
+            filteredProducts = filteredProducts.filter { product in
+                let productContactMethodIDs = product.sellerContacts.map { $0.id }
+                return !Set(selectedContactMethodFilters).isDisjoint(with: productContactMethodIDs)
+            }
+        }
+
         // Filter by search text
         if let searchText = searchText, !searchText.isEmpty {
-            filteredProducts = filteredProducts.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+            filteredProducts = filteredProducts.filter {
+                $0.name.lowercased().contains(searchText.lowercased())
+            }
         }
-        
+
         DispatchQueue.main.async {
             self.products = filteredProducts
         }
     }
+
+
 }
