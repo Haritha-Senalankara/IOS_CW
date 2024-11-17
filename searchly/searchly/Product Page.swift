@@ -442,6 +442,8 @@ struct Product_Page: View {
                 fetchProductDetails()
                 fetchOtherProducts()
                 fetchReviews()
+                
+                updateRecentlyVisitedProducts()
             }
             // Sheets for Profile and Notifications
             .sheet(isPresented: $navigateToProfile) {
@@ -461,6 +463,57 @@ struct Product_Page: View {
                 }
             }
         }
+
+    // Add this function inside the Product_Page struct
+    private func updateRecentlyVisitedProducts() {
+        guard !userID.isEmpty else { return }
+
+        let customerRef = db.collection("customers").document(userID)
+
+        customerRef.getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching customer data: \(error)")
+                return
+            }
+
+            guard let data = snapshot?.data() else {
+                print("No customer data found for ID: \(userID)")
+                return
+            }
+
+            // Retrieve the current recently_visited_products array
+            var recentlyVisited = data["recently_visited_products"] as? [[String: Any]] ?? []
+
+            // Remove any existing entry for the current productID
+            recentlyVisited.removeAll { $0["productID"] as? String == productID }
+
+            // Create a new entry with the current timestamp
+            let newEntry: [String: Any] = [
+                "productID": productID,
+                "timestamp": Timestamp(date: Date())
+            ]
+
+            // Prepend the new entry to the list
+            recentlyVisited.insert(newEntry, at: 0)
+
+            // Trim the list to the first 10 items
+            if recentlyVisited.count > 10 {
+                recentlyVisited = Array(recentlyVisited.prefix(10))
+            }
+
+            // Update the Firestore document with the modified list
+            customerRef.updateData([
+                "recently_visited_products": recentlyVisited
+            ]) { error in
+                if let error = error {
+                    print("Error updating recently_visited_products: \(error)")
+                } else {
+                    print("recently_visited_products updated successfully.")
+                }
+            }
+        }
+    }
+
     
     // MARK: - Recalculate Average Rating Function
     // MARK: - Recalculate Average Rating Function
@@ -1048,6 +1101,13 @@ struct Product_Page: View {
             }
         }
     }
+}
+
+// Add this struct below your existing structs
+struct RecentlyVisitedProduct: Identifiable, Codable {
+    var id: String { productID } // Conform to Identifiable
+    let productID: String
+    let timestamp: Timestamp
 }
 
 // Utility to create a color from hex value
