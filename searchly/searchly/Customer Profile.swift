@@ -3,33 +3,32 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct Customer_Profile: View {
-    @State private var name: String = "Loading..." // Default value for name
-    @State private var profileImageURL: String = "" // Default value for profile image URL
-    @State private var isLoading: Bool = true // Loading state
-    @State private var navigateToOnboarding: Bool = false // For logout navigation
+    @State private var name: String = "Loading..."
+    @State private var profileImageURL: String = ""
+    @State private var isLoading: Bool = true
+    @State private var navigateToOnboarding: Bool = false
 
     // Additional Profile Fields
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var phoneNumber: String = ""
-    @State private var gender: String = "Male" // Default gender
-    
-    
+    @State private var gender: String = "Male"
+
     @State private var recentlyViewedProducts: [Products] = []
-    
-    private let db = Firestore.firestore() // Firestore reference
-    
+    @State private var generatedOTP: String = "" // Temporary OTP
+    @State private var enteredOTP: String = "" // For user OTP input
+    @State private var showOTPPopup: Bool = false // To show OTP popup
+
+    private let db = Firestore.firestore()
+
     var body: some View {
         VStack(spacing: 0) {
-            
             // Profile Picture and Name Section
             VStack(spacing: 15) {
                 if isLoading {
-                    // Show a loading placeholder while data is being fetched
                     ProgressView()
                         .frame(width: 100, height: 100)
                 } else {
-                    // Profile Image
                     AsyncImage(url: URL(string: profileImageURL)) { image in
                         image
                             .resizable()
@@ -38,7 +37,7 @@ struct Customer_Profile: View {
                             .clipShape(Circle())
                             .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
                     } placeholder: {
-                        Image(systemName: "person.circle.fill") // Placeholder image
+                        Image(systemName: "person.circle.fill")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 100, height: 100)
@@ -49,7 +48,6 @@ struct Customer_Profile: View {
                     }
                 }
 
-                // Name and Edit Icon
                 HStack(spacing: 8) {
                     Text(name)
                         .font(.custom("Heebo-Bold", size: 18))
@@ -58,10 +56,9 @@ struct Customer_Profile: View {
             }
             .padding(.bottom, 40)
             .padding(.top, 50)
-            
-            // Additional Profile Editing Section
+
+            // Profile Editing Section
             VStack(spacing: 20) {
-                // First Name
                 HStack {
                     Text("First Name")
                         .font(.headline)
@@ -69,8 +66,7 @@ struct Customer_Profile: View {
                     TextField("Enter first name", text: $firstName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
-                
-                // Last Name
+
                 HStack {
                     Text("Last Name")
                         .font(.headline)
@@ -78,8 +74,7 @@ struct Customer_Profile: View {
                     TextField("Enter last name", text: $lastName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
-                
-                // Phone Number
+
                 HStack {
                     Text("Phone")
                         .font(.headline)
@@ -88,8 +83,7 @@ struct Customer_Profile: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.phonePad)
                 }
-                
-                // Gender Selector
+
                 HStack {
                     Text("Gender")
                         .font(.headline)
@@ -99,11 +93,9 @@ struct Customer_Profile: View {
                         Text("Female").tag("Female")
                     }
                     .pickerStyle(SegmentedPickerStyle())
-                    .frame(maxWidth: 200)
                 }
-                
-                // Save Button
-                Button(action: saveProfile) {
+
+                Button(action: generateAndSendOTP) {
                     Text("Save")
                         .font(.custom("Heebo-Bold", size: 16))
                         .frame(maxWidth: .infinity)
@@ -115,16 +107,17 @@ struct Customer_Profile: View {
                 .padding(.top, 20)
             }
             .padding(.horizontal, 20)
-            
+
             Spacer()
             Divider()
-            
+
+            // Recently Viewed Products Section
             VStack(alignment: .leading, spacing: 10) {
                 Text("Recently Viewed Products")
                     .font(.custom("Heebo-Bold", size: 16))
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-                
+
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
                         ForEach(recentlyViewedProducts, id: \.id) { product in
@@ -143,9 +136,6 @@ struct Customer_Profile: View {
                     .padding(.horizontal, 20)
                 }
             }
-            
-            
-            
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -153,20 +143,89 @@ struct Customer_Profile: View {
             fetchCustomerProfile()
             fetchRecentlyViewedProducts()
         }
+        .sheet(isPresented: $showOTPPopup) {
+            OTPVerificationPopup(
+                enteredOTP: $enteredOTP,
+                generatedOTP: generatedOTP,
+                onVerify: verifyOTP
+            )
+        }
     }
-    
+
+    // MARK: - Generate and Send OTP
+    private func generateAndSendOTP() {
+        guard !phoneNumber.isEmpty else {
+            print("Phone number is empty")
+            return
+        }
+
+        // Generate a random 6-digit OTP
+        generatedOTP = String(format: "%06d", Int.random(in: 100000...999999))
+
+        // Save OTP in Firestore
+        let otpData: [String: Any] = [
+            "to": "\(phoneNumber)",
+            "otp_msg": "Your OTP is \(generatedOTP)"
+        ]
+
+        db.collection("OTP").addDocument(data: otpData) { error in
+            if let error = error {
+                print("Error saving OTP: \(error.localizedDescription)")
+            } else {
+                print("OTP saved successfully. Sent to \(phoneNumber)")
+                // Show OTP popup
+                showOTPPopup = true
+            }
+        }
+    }
+
+    // MARK: - Verify OTP
+    private func verifyOTP() {
+        if enteredOTP == generatedOTP {
+            saveProfile() // Save the profile if OTP matches
+            showOTPPopup = false // Dismiss the popup
+        } else {
+            print("Invalid OTP")
+        }
+    }
+
+    // MARK: - Save Profile to Firestore
+    private func saveProfile() {
+        guard let userID = UserDefaults.standard.string(forKey: "userID") else {
+            print("User ID not found")
+            return
+        }
+
+        let updatedData: [String: Any] = [
+            "first_name": firstName,
+            "last_name": lastName,
+            "phone": phoneNumber,
+            "gender": gender,
+            "name": "\(firstName) \(lastName)"
+        ]
+
+        db.collection("customers").document(userID).setData(updatedData, merge: true) { error in
+            if let error = error {
+                print("Error updating profile: \(error.localizedDescription)")
+            } else {
+                print("Profile updated successfully.")
+            }
+        }
+    }
+
+    // MARK: - Fetch Customer Profile
     private func fetchCustomerProfile() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
             return
         }
-        
+
         db.collection("customers").document(userID).getDocument { document, error in
             if let error = error {
                 print("Error fetching customer profile: \(error.localizedDescription)")
                 return
             }
-            
+
             if let document = document, document.exists {
                 let data = document.data()
                 DispatchQueue.main.async {
@@ -183,56 +242,30 @@ struct Customer_Profile: View {
             }
         }
     }
-    
-    private func saveProfile() {
-        guard let userID = UserDefaults.standard.string(forKey: "userID") else {
-            print("User ID not found")
-            return
-        }
-        
-        let updatedData: [String: Any] = [
-            "first_name": firstName,
-            "last_name": lastName,
-            "phone": phoneNumber,
-            "gender": gender,
-            "name": firstName + " " + lastName
-        ]
-        
-        db.collection("customers").document(userID).updateData(updatedData) { error in
-            if let error = error {
-                print("Error updating profile: \(error.localizedDescription)")
-            } else {
-                print("Profile updated successfully.")
-            }
-        }
-    }
-    
-    // Replace the existing fetchOtherProducts() function with the following:
 
+    // MARK: - Fetch Recently Viewed Products
     private func fetchRecentlyViewedProducts() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
             return
         }
-        
+
         db.collection("customers").document(userID).getDocument { document, error in
             if let error = error {
                 print("Error fetching customer data: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let document = document, document.exists, let data = document.data() else {
                 print("No document found for user ID: \(userID)")
                 return
             }
-            
-            // Retrieve the recently viewed products array
+
             guard let recentlyVisitedData = data["recently_visited_products"] as? [[String: Any]] else {
                 print("No recently visited products found for user ID: \(userID)")
                 return
             }
-            
-            // Extract productIDs and sort by timestamp descending
+
             let sortedVisited = recentlyVisitedData.compactMap { dict -> (String, Date)? in
                 guard let productID = dict["productID"] as? String,
                       let timestamp = dict["timestamp"] as? Timestamp else {
@@ -240,16 +273,14 @@ struct Customer_Profile: View {
                 }
                 return (productID, timestamp.dateValue())
             }.sorted { $0.1 > $1.1 }
-            
-            // Extract unique productIDs (limit to 10)
+
             let productIDs = Array(Set(sortedVisited.map { $0.0 })).prefix(10)
-            
+
             if productIDs.isEmpty {
                 print("No recently viewed products to display.")
                 return
             }
-            
-            // Fetch product details from Firestore
+
             db.collection("products")
                 .whereField(FieldPath.documentID(), in: Array(productIDs))
                 .getDocuments { snapshot, error in
@@ -257,13 +288,12 @@ struct Customer_Profile: View {
                         print("Error fetching products: \(error.localizedDescription)")
                         return
                     }
-                    
+
                     guard let documents = snapshot?.documents else {
                         print("No products found.")
                         return
                     }
-                    
-                    // Map documents to Products objects
+
                     let products: [Products] = documents.compactMap { doc in
                         let data = doc.data()
                         let id = doc.documentID
@@ -277,8 +307,7 @@ struct Customer_Profile: View {
                         let ratingString = data["rating"] as? String ?? "\(data["rating"] as? Double ?? 0.0)"
                         let rating = Double(ratingString) ?? 0.0
                         let categories = data["categories"] as? [String] ?? []
-                        
-                        // Create a Products object
+
                         return Products(
                             id: id,
                             name: name,
@@ -289,26 +318,62 @@ struct Customer_Profile: View {
                             rating: rating,
                             categories: categories,
                             imageName: imageName
-                            // Include other fields if necessary
                         )
                     }
-                    
-                    // Sort products based on the order of productIDs
+
                     let sortedProducts = productIDs.compactMap { id in
                         products.first(where: { $0.id == id })
                     }
-                    
+
                     DispatchQueue.main.async {
                         self.recentlyViewedProducts = sortedProducts
                     }
                 }
         }
     }
-
-
 }
 
-// Preview
+// MARK: - OTP Verification Popup
+struct OTPVerificationPopup: View {
+    @Binding var enteredOTP: String
+    let generatedOTP: String
+    let onVerify: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Verify OTP")
+                .font(.headline)
+
+            TextField("Enter OTP", text: $enteredOTP)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .keyboardType(.numberPad)
+
+            Button(action: onVerify) {
+                Text("Verify")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.yellow)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+
+            Button(action: {
+                UIApplication.shared.windows.first?.rootViewController?.dismiss(animated: true)
+            }) {
+                Text("Cancel")
+                    .foregroundColor(.red)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(15)
+        .shadow(radius: 10)
+        .frame(maxWidth: 300)
+    }
+}
+
+// MARK: - Preview
 #Preview {
     Customer_Profile()
 }

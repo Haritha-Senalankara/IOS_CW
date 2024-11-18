@@ -16,6 +16,7 @@ struct ProductCard: View {
     var price: String
     var likes: String
     var rating: String
+    var imageData: Data? // Added imageData
     
     // Number formatter for price
     private var formattedPrice: String {
@@ -41,23 +42,48 @@ struct ProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            AsyncImage(url: URL(string: imageName)) { image in
-                image
+//            AsyncImage(url: URL(string: imageName)) { image in
+//                image
+//                    .resizable()
+//                    .scaledToFill() // Ensures the image covers the entire frame while maintaining aspect ratio
+//                    .frame(width: 138, height: 166) // Adjust the size as per your design
+//                    .clipped() // Clips the overflowing parts to fit the frame
+//                    .cornerRadius(8)
+//            } placeholder: {
+//                Color.gray // Placeholder while the image is loading
+//                    .frame(width: 120, height: 120) // Match the size of the image frame
+//                    .cornerRadius(8)
+//            }
+            if let imageData = imageData, let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
                     .resizable()
-                    .scaledToFill() // Ensures the image covers the entire frame while maintaining aspect ratio
-                    .frame(width: 138, height: 166) // Adjust the size as per your design
-                    .clipped() // Clips the overflowing parts to fit the frame
+                    .scaledToFill()
+                    .frame(width: 138, height: 166)
+                    .clipped()
                     .cornerRadius(8)
-            } placeholder: {
-                Color.gray // Placeholder while the image is loading
-                    .frame(width: 120, height: 120) // Match the size of the image frame
-                    .cornerRadius(8)
+            } else {
+                AsyncImage(url: URL(string: imageName)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 138, height: 166)
+                        .clipped()
+                        .cornerRadius(8)
+                } placeholder: {
+                    Color.gray
+                        .frame(width: 138, height: 166)
+                        .cornerRadius(8)
+                }
             }
+
+            Divider()
             
             Text(name)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(.black)
                 .lineLimit(2)
+            
+            Divider()
             
             Text(siteName)
                 .font(.custom("Heebo-Regular", size: 12))

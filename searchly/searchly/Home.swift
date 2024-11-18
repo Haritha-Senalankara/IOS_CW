@@ -11,6 +11,9 @@ import MapKit
 
 // MARK: - Home View
 struct Home: View {
+    
+    @State private var isLoading: Bool = true
+    
     @StateObject private var viewModel = ProductViewModel()
     @State private var showPriceFilter = false
     @State private var selectedMinPrice: Double = 0 // Default min price
@@ -90,19 +93,28 @@ struct Home: View {
                     // Product Listings
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                            ForEach(viewModel.products) { product in
-                                NavigationLink(value: product.id) { // Use 'value' instead of 'destination'
-                                    ProductCard(
-                                        imageName: product.imageName,
-                                        name: product.name,
-                                        siteName: product.siteName,
-                                        price: "\(Int(product.price))",
-                                        likes: "\(product.likes)",
-                                        rating: String(format: "%.1f", product.rating)
-                                    )
-                                }
-                                .buttonStyle(PlainButtonStyle()) // Optional: Remove default button styling
+                            if isLoading{
+                                ProgressView()
+                                    .scaleEffect(3)
+                                    .padding(.top,200)
+                                    .padding(.leading,170)
                             }
+                            else{
+                                ForEach(viewModel.products) { product in
+                                    NavigationLink(value: product.id) { // Use 'value' instead of 'destination'
+                                        ProductCard(
+                                            imageName: product.imageName,
+                                            name: product.name,
+                                            siteName: product.siteName,
+                                            price: "\(Int(product.price))",
+                                            likes: "\(product.likes)",
+                                            rating: String(format: "%.1f", product.rating)
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle()) // Optional: Remove default button styling
+                                }
+                            }
+                            
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 10)
@@ -194,9 +206,16 @@ struct Home: View {
                 viewModel.fetchAppFilters {
                     viewModel.fetchContactMethodFilters {
                         viewModel.fetchProducts()
+                            
                     }
                 }
+                
+                // Timer to set isLoading to false after 2 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                    isLoading = false
+                }
             }
+            
             // After your existing modifiers in the Home view, add:
             .onChange(of: searchText) { newValue in
                 viewModel.searchText = newValue

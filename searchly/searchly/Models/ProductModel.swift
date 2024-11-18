@@ -19,6 +19,7 @@ struct Products: Identifiable {
     var rating: Double
     var categories: [String]
     var imageName: String // Includes fallback for missing images
+    var imageData: Data? // Add this property
     var location: CLLocationCoordinate2D?
     var sellerApps: [AppFilter] = [] // Holds seller's apps
     var sellerContacts: [ContactMethodFilter] = [] // Holds seller's contact methods

@@ -1,79 +1,84 @@
+//
+//  Settings.swift
+//  searchly
+//
+//  Created by cobsccompy4231p-007 on 2024-11-18.
+//
+
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct Settings: View {
     @State private var isNotificationEnabled: Bool = true
     @State private var navigateToOnboarding: Bool = false // State to handle navigation to onboarding
-
+    
+    // State variables for Privacy Policy
+    @State private var privacyPolicyText: String = ""
+    @State private var isPrivacyPolicyVisible: Bool = false
+    @State private var isFetchingPolicy: Bool = false
+    @State private var policyErrorMessage: String? = nil
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Top Navigation Bar
-//            HStack {
-//                Spacer()
-//                
-//                Image("notification-icon")
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 20, height: 20)
-//                    .padding(.trailing, 15)
-//                
-//                Image("profile-icon")
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 20, height: 20)
-//                    .padding(.trailing, 20)
-//            }
-//            .padding(.top, 50)
-//            .padding(.bottom, 10)
-            
             // Settings Title
             Text("Settings")
-                .font(.custom("Heebo-Bold", size: 18))
+                .font(.custom("Heebo-Bold", size: 24))
                 .foregroundColor(Color(hexValue: "#606084"))
-                .padding(.top, 10)
+                .padding(.top, 5)
                 .padding(.bottom, 20)
             
             // Settings Options
             VStack(spacing: 0) {
-                HStack {
-                    Image("notification-normal")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                    
-                    Text("Notification")
-                        .font(.custom("Heebo-Regular", size: 16))
-                        .foregroundColor(.black)
-                        .padding(.leading, 10)
-                    
-                    Spacer()
-                    
-                    if isNotificationEnabled {
-                        Image("tick-squrae-icon")
+                // Notification Toggle
+                Toggle(isOn: $isNotificationEnabled) {
+                    HStack {
+                        Image(systemName: "bell")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 20, height: 20)
+                            .foregroundColor(.black)
+                        
+                        Text("Notifications")
+                            .font(.custom("Heebo-Regular", size: 16))
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
+                        
+                        Spacer()
                     }
                 }
+                .toggleStyle(SwitchToggleStyle(tint: Color(hexValue: "#F2A213")))
                 .padding(.vertical, 15)
                 .padding(.horizontal, 20)
+                .onChange(of: isNotificationEnabled) { value in
+                    updateNotificationStatus(to: value)
+                }
                 
                 Divider()
                     .background(Color.gray.opacity(0.3))
                     .padding(.leading, 20)
                 
-                HStack {
-                    Image("shield-icon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                    
-                    Text("Privacy Policy")
-                        .font(.custom("Heebo-Regular", size: 16))
-                        .foregroundColor(.black)
-                        .padding(.leading, 10)
-                    
-                    Spacer()
+                // Privacy Policy Button
+                Button(action: {
+                    togglePrivacyPolicy()
+                }) {
+                    HStack {
+                        Image(systemName: "shield")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .foregroundColor(.black)
+                        
+                        Text("Privacy Policy")
+                            .font(.custom("Heebo-Regular", size: 16))
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
                 }
                 .padding(.vertical, 15)
                 .padding(.horizontal, 20)
@@ -84,7 +89,7 @@ struct Settings: View {
             .padding(.horizontal, 20)
             .padding(.top, 10)
             
-            Spacer() // Push the logout button and navigation bar to the bottom
+            Spacer() // Push the logout button to the bottom
             
             // Logout Button
             Button(action: {
@@ -100,45 +105,91 @@ struct Settings: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
-            
-            // Bottom Navigation Bar
-//            VStack(spacing: 0) {
-//                Divider()
-//                HStack {
-//                    NavigationLink(destination: Home()) {
-//                        BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-//                    }
-//                    
-//                    Spacer()
-//                    NavigationLink(destination: Wishlist()) {
-//                        BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-//                    }
-//                    Spacer()
-//                    NavigationLink(destination: Settings()) {
-//                        BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: true)
-//                    }
-//                }
-//                .padding(.horizontal, 40)
-//                .padding(.vertical, 10)
-//                .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-//                .foregroundColor(.white)
-//                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-//                .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
-//            }
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
         .background(
             NavigationLink(
-                destination: onboarding(), // Navigate to onboarding screen
+                destination: onboarding(), // Replace with your actual Onboarding view
                 isActive: $navigateToOnboarding
             ) {
                 EmptyView()
             }
             .hidden()
         )
+        // Privacy Policy Sheet
+        .sheet(isPresented: $isPrivacyPolicyVisible) {
+            PrivacyPolicySheet(text: $privacyPolicyText, isFetching: $isFetchingPolicy, errorMessage: $policyErrorMessage)
+        }
     }
     
+    // MARK: - Update Notification Status in Firestore
+    private func updateNotificationStatus(to status: Bool) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated.")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        db.collection("customers").document(uid).updateData([
+            "notification_status": status
+        ]) { error in
+            if let error = error {
+                print("Error updating notification status: \(error.localizedDescription)")
+            } else {
+                print("Notification status updated to \(status).")
+            }
+        }
+    }
+    
+    // MARK: - Toggle Privacy Policy Visibility and Fetch Policy
+    private func togglePrivacyPolicy() {
+        if isPrivacyPolicyVisible {
+            // If already visible, hide it
+            isPrivacyPolicyVisible = false
+        } else {
+            // Show and fetch the privacy policy
+            isPrivacyPolicyVisible = true
+            fetchPrivacyPolicy()
+        }
+    }
+    
+    // MARK: - Fetch Privacy Policy from Firestore
+    private func fetchPrivacyPolicy() {
+        // If already fetched, don't fetch again
+        if !privacyPolicyText.isEmpty {
+            return
+        }
+        
+        isFetchingPolicy = true
+        policyErrorMessage = nil
+        
+        let db = Firestore.firestore()
+        let policyRef = db.collection("system_info").document("policy")
+        
+        policyRef.getDocument { snapshot, error in
+            isFetchingPolicy = false
+            
+            if let error = error {
+                print("Error fetching privacy policy: \(error.localizedDescription)")
+                policyErrorMessage = "Failed to load Privacy Policy."
+                return
+            }
+            
+            guard let data = snapshot?.data(),
+                  let desc = data["desc"] as? String else {
+                print("Privacy policy data is missing.")
+                policyErrorMessage = "Privacy Policy not available."
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.privacyPolicyText = desc
+            }
+        }
+    }
+    
+    // MARK: - Logout Function
     private func logout() {
         do {
             // Sign out from Firebase
@@ -147,9 +198,9 @@ struct Settings: View {
             // Clear user ID from UserDefaults
             UserDefaults.standard.removeObject(forKey: "userID")
             
-            // Clear Keychain data
-//            KeychainHelper.shared.delete(key: "authenticatedUser")
-//            print("Cleared User ID from Keychain.")
+            // Clear Keychain data if applicable
+            // KeychainHelper.shared.delete(key: "authenticatedUser")
+            // print("Cleared User ID from Keychain.")
             
             // Navigate to onboarding screen
             navigateToOnboarding = true
@@ -157,27 +208,49 @@ struct Settings: View {
             print("Error signing out: %@", signOutError)
         }
     }
-
 }
 
-// Custom extension for color initialization using hex values
-//extension Color {
-//    init(hexValue: String) {
-//        let scanner = Scanner(string: hexValue)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
+// MARK: - Privacy Policy Sheet View
+struct PrivacyPolicySheet: View {
+    @Binding var text: String
+    @Binding var isFetching: Bool
+    @Binding var errorMessage: String?
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                if isFetching {
+                    ProgressView("Loading Privacy Policy...")
+                        .padding()
+                } else if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .padding()
+                } else {
+                    ScrollView {
+                        Text(text)
+                            .font(.custom("Heebo-Regular", size: 16))
+                            .foregroundColor(.gray)
+                            .padding()
+                    }
+                }
+                Spacer()
+            }
+            .navigationBarTitle("Privacy Policy", displayMode: .inline)
+            .navigationBarItems(trailing: Button("Done") {
+                // Dismiss the sheet
+                dismiss()
+            })
+        }
+    }
+    
+    // Dismiss the sheet
+    private func dismiss() {
+        // This function will be implemented by the parent view
+    }
+}
 
-// Preview for SwiftUI canvas
+
 struct Settings_Previews: PreviewProvider {
     static var previews: some View {
         Settings()

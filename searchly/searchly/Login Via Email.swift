@@ -20,7 +20,7 @@ struct Login_Via_Email: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 133, height: 121)
-                    .padding(.top, 30)
+                    .padding(.top, 40)
                 
                 Text("Login")
                     .font(.custom("Heebo-Bold", size: 26))
@@ -33,9 +33,9 @@ struct Login_Via_Email: View {
                     .font(.custom("Heebo-Regular", size: 14))
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color(hex: "#606084"))
-                    .padding(.horizontal, 25)
+                    .padding(.horizontal, 0)
                 
-                Spacer()
+//                Spacer()
                 
                 VStack(spacing: 40) {
                     HStack {
@@ -90,7 +90,6 @@ struct Login_Via_Email: View {
                                 .foregroundColor(Color(hex: "#606084"))
                         }
                         .padding(.trailing, 30)
-                        .padding(.bottom, 20)
                         .alert("Reset Password", isPresented: $showForgotPasswordAlert) {
                             TextField("Enter your email", text: $forgotPasswordEmail)
                             Button("Send") {

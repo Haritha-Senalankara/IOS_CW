@@ -34,14 +34,14 @@ struct Product_Page: View {
     private let eventStore = EKEventStore()
 
     // Variables for product details
-    @State private var product_name: String = "Apple iPhone 15 Pro 128GB"
-    @State private var seller_name: String = "Appleasia.lk"
-    @State private var seller_likes: String = "1"
+    @State private var product_name: String = ""
+    @State private var seller_name: String = ""
+    @State private var seller_likes: String = ""
     @State private var seller_id: String = "" // Seller ID for navigation
-    @State private var product_likes: Int = 652
-    @State private var product_dislikes: Int = 1
-    @State private var product_ratings: Double = 4.5 // Average rating
-    @State private var product_desc: String = "..."
+    @State private var product_likes: Int = 0
+    @State private var product_dislikes: Int = 0
+    @State private var product_ratings: Double = 0 // Average rating
+    @State private var product_desc: String = ""
     
     @State private var product_price: String = ""
 
@@ -97,329 +97,335 @@ struct Product_Page: View {
     var body: some View {
         NavigationView{
             ZStack {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        Spacer()
-                        Spacer()
-                        TopNavBar(
-                            searchText: $searchText,
-                            onProfileTap: {
-                                navigateToProfile = true
-                            },
-                            onNotificationTap: {
-                                navigateToNotification = true
-                            },
-                            showSearch: false
-                        )
-                        Spacer()
-                        
-                        // Product Image
-                        AsyncImage(url: URL(string: product_img)) { phase in
-                            switch phase {
-                            case .empty:
-                                Color.gray
-                                    .frame(height: 250)
-                                    .padding(.horizontal, 20)
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 250)
-                                    .padding(.horizontal, 20)
-                            case .failure:
-                                Image(systemName: "photo") // Use a system image or your default image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 250)
-                                    .padding(.horizontal, 20)
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        
-                        // Product Info Section
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text(product_name)
-                                    .font(.custom("Heebo-Bold", size: 18))
-                                    .foregroundColor(.black)
-                                
-                                Spacer()
-                                
-                                // Heart Icon with tap gesture
-                                Image(isFavorite ? "heart-icon-filled" : "heart-icon-only-border")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 24, height: 24)
-                                    .onTapGesture {
-                                        toggleFavorite()
-                                    }
+                if isLoading{
+                    ProgressView()
+                        .scaleEffect(2)
+                }
+                else{
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            Spacer()
+                            Spacer()
+                            TopNavBar(
+                                searchText: $searchText,
+                                onProfileTap: {
+                                    navigateToProfile = true
+                                },
+                                onNotificationTap: {
+                                    navigateToNotification = true
+                                },
+                                showSearch: false
+                            )
+                            Spacer()
+                            
+                            // Product Image
+                            AsyncImage(url: URL(string: product_img)) { phase in
+                                switch phase {
+                                case .empty:
+                                    Color.gray
+                                        .frame(height: 250)
+                                        .padding(.horizontal, 20)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 250)
+                                        .padding(.horizontal, 20)
+                                case .failure:
+                                    Image(systemName: "photo") // Use a system image or your default image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 250)
+                                        .padding(.horizontal, 20)
+                                @unknown default:
+                                    EmptyView()
+                                }
                             }
                             
-                            HStack {
+                            // Product Info Section
+                            VStack(alignment: .leading, spacing: 10) {
                                 HStack {
-                                    AsyncImage(url: URL(string: seller_profile_img_link)) { phase in
-                                        switch phase {
-                                        case .empty:
-                                            Color.gray
-                                                .frame(width: 20, height: 20)
-                                                .cornerRadius(10)
-                                        case .success(let image):
-                                            image
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 20, height: 20)
-                                                .clipped()
-                                                .cornerRadius(10)
-                                        case .failure:
-                                            Image(systemName: "person.crop.circle.fill") // Default profile image
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 20, height: 20)
-                                                .clipped()
-                                                .cornerRadius(10)
-                                        @unknown default:
-                                            EmptyView()
+                                    Text(product_name)
+                                        .font(.custom("Heebo-Bold", size: 18))
+                                        .foregroundColor(.black)
+                                    
+                                    Spacer()
+                                    
+                                    // Heart Icon with tap gesture
+                                    Image(isFavorite ? "heart-icon-filled" : "heart-icon-only-border")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 24, height: 24)
+                                        .onTapGesture {
+                                            toggleFavorite()
                                         }
-                                    }
-
-                                    // NavigationLink for seller name
-                                    NavigationLink(destination: Seller_Profile(sellerID: seller_id)) {
-                                        Text(seller_name)
+                                }
+                                
+                                HStack {
+                                    HStack {
+                                        AsyncImage(url: URL(string: seller_profile_img_link)) { phase in
+                                            switch phase {
+                                            case .empty:
+                                                Color.gray
+                                                    .frame(width: 20, height: 20)
+                                                    .cornerRadius(10)
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 20, height: 20)
+                                                    .clipped()
+                                                    .cornerRadius(10)
+                                            case .failure:
+                                                Image(systemName: "person.crop.circle.fill") // Default profile image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 20, height: 20)
+                                                    .clipped()
+                                                    .cornerRadius(10)
+                                            @unknown default:
+                                                EmptyView()
+                                            }
+                                        }
+                                        
+                                        // NavigationLink for seller name
+                                        NavigationLink(destination: Seller_Profile(sellerID: seller_id)) {
+                                            Text(seller_name)
+                                                .font(.custom("Heebo-Regular", size: 12))
+                                                .foregroundColor(.black) // Make it look clickable
+                                        }
+                                        
+                                        Text(seller_likes)
                                             .font(.custom("Heebo-Regular", size: 12))
-                                            .foregroundColor(.black) // Make it look clickable
+                                            .foregroundColor(.gray)
                                     }
-
-                                    Text(seller_likes)
-                                        .font(.custom("Heebo-Regular", size: 12))
-                                        .foregroundColor(.gray)
-                                }
-
-                                Spacer()
-
-                                Text(String(formattedPrice))
-                                    .font(.custom("Heebo-Bold", size: 16))
-                                    .foregroundColor(Color(hexValue: "#F2A213"))
-                            }
-
-                            
-                            // Horizontal Scroll for Action Buttons
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 15) {
-                                    // Like Button with tap gesture
-                                    IconActionButton(iconName: hasLiked ? "like-icon-product" : "like-icon-product", label: String(product_likes))
-                                        .onTapGesture {
-                                            toggleLike()
-                                        }
                                     
-                                    // Dislike Button with tap gesture
-                                    IconActionButton(iconName: hasDisliked ? "dislike-icon-product" : "dislike-icon-product", label: String(product_dislikes))
-                                        .onTapGesture {
-                                            toggleDislike()
-                                        }
+                                    Spacer()
                                     
-                                    IconActionButton(iconName: "share-icon-product", label: "Share")
-                                        .onTapGesture {
-                                            shareProduct()
-                                        }
-                                    
-                                    IconActionButton(iconName: "star-icon-product", label: String(format: "%.1f", product_ratings))
-                                        .onTapGesture {
-                                            withAnimation {
-                                                showRatingInput.toggle() // Toggle the rating input modal
-                                                showReviews.toggle()// Show reviews when rating input is toggled
-                                            }
-                                        }
-                                    
-                                    IconActionButton(iconName: "calander-icon-product", label: "Remind")
-                                        .onTapGesture {
-                                            withAnimation {
-                                                showDatePicker.toggle()
-                                            }
-                                        }
-                                }
-                                .padding(.top, 5)
-                            }
-                            
-                            // Customer Reviews Section with Pagination
-                            if showReviews {
-                                VStack(alignment: .leading) {
-                                    Text("Customer Reviews")
-                                        .font(.headline)
-                                        .padding()
-
-                                    ForEach(reviews) { review in
-                                        VStack(alignment: .leading) {
-                                            HStack {
-                                                Text(review.userName)
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.black) // Optional: Make the username stand out
-                                                Spacer()
-                                                Text("\(review.rating) ★")
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.yellow)
-                                            }
-
-                                            Text(review.comment)
-                                                .padding(.top, 5)
-                                                .font(.body)
-                                                .foregroundColor(.gray)
-                                        }
-                                        .padding()
-                                        .background(Color.white)
-                                        .cornerRadius(8)
-                                        .shadow(radius: 5)
-                                        .padding(.horizontal)
-                                        .padding(.bottom, 10)
-                                    }
-
-                                    // Load More Button for Pagination
-                                    if !allReviewsLoaded {
-                                        Button(action: {
-                                            loadMoreReviews()
-                                        }) {
-                                            if isLoadingMore {
-                                                ProgressView()
-                                                    .padding()
-                                            } else {
-                                                Text("Load More")
-                                                    .font(.custom("Heebo-Regular", size: 14))
-                                                    .foregroundColor(.blue)
-                                                    .padding()
-                                            }
-                                        }
-                                        .padding(.bottom, 10)
-                                    }
-                                }
-                            }
-
-                            
-                            
-                            if showRatingInput {
-                                VStack {
-                                    Text("Rate the Product")
-                                        .font(.headline)
-                                    
-                                    Picker("Rating", selection: $userRating) {
-                                        ForEach(1...5, id: \.self) { rating in
-                                            Text("\(rating) ★").tag(rating)
-                                        }
-                                    }
-                                    .pickerStyle(SegmentedPickerStyle())
-                                    .padding()
-                                    
-                                    TextField("Leave a comment", text: $userComment)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .padding()
-                                    
-                                    Button("Submit") {
-                                        addReview() // Call the function to save the review
-//                                        showRatingInput = false
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.green)
-                                    .cornerRadius(8)
-                                }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(10)
-                                .shadow(radius: 10)
-                            }
-                            
-                            
-                            // Date Picker Section
-                            if showDatePicker {
-                                VStack(spacing: 10) {
-                                    Text("Select Reminder Date & Time")
+                                    Text(String(formattedPrice))
                                         .font(.custom("Heebo-Bold", size: 16))
-                                        .foregroundColor(.gray)
-                                    
-                                    DatePicker("Reminder Date", selection: $reminderDate, displayedComponents: [.date, .hourAndMinute])
-                                        .datePickerStyle(WheelDatePickerStyle())
-                                        .labelsHidden()
-                                        .frame(maxWidth: .infinity)
-                                    
+                                        .foregroundColor(Color(hexValue: "#F2A213"))
+                                }
+                                
+                                
+                                // Horizontal Scroll for Action Buttons
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 15) {
+                                        // Like Button with tap gesture
+                                        IconActionButton(iconName: hasLiked ? "like-icon-product" : "like-icon-product", label: String(product_likes))
+                                            .onTapGesture {
+                                                toggleLike()
+                                            }
+                                        
+                                        // Dislike Button with tap gesture
+                                        IconActionButton(iconName: hasDisliked ? "dislike-icon-product" : "dislike-icon-product", label: String(product_dislikes))
+                                            .onTapGesture {
+                                                toggleDislike()
+                                            }
+                                        
+                                        IconActionButton(iconName: "share-icon-product", label: "Share")
+                                            .onTapGesture {
+                                                shareProduct()
+                                            }
+                                        
+                                        IconActionButton(iconName: "star-icon-product", label: String(format: "%.1f", product_ratings))
+                                            .onTapGesture {
+                                                withAnimation {
+                                                    showRatingInput.toggle() // Toggle the rating input modal
+                                                    showReviews.toggle()// Show reviews when rating input is toggled
+                                                }
+                                            }
+                                        
+                                        IconActionButton(iconName: "calander-icon-product", label: "Remind")
+                                            .onTapGesture {
+                                                withAnimation {
+                                                    showDatePicker.toggle()
+                                                }
+                                            }
+                                    }
+                                    .padding(.top, 5)
+                                }
+                                
+                                // Customer Reviews Section with Pagination
+                                if showReviews {
+                                    VStack(alignment: .leading) {
+                                        Text("Customer Reviews")
+                                            .font(.headline)
+                                            .padding()
+                                        
+                                        ForEach(reviews) { review in
+                                            VStack(alignment: .leading) {
+                                                HStack {
+                                                    Text(review.userName)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.black) // Optional: Make the username stand out
+                                                    Spacer()
+                                                    Text("\(review.rating) ★")
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.yellow)
+                                                }
+                                                
+                                                Text(review.comment)
+                                                    .padding(.top, 5)
+                                                    .font(.body)
+                                                    .foregroundColor(.gray)
+                                            }
+                                            .padding()
+                                            .background(Color.white)
+                                            .cornerRadius(8)
+                                            .shadow(radius: 5)
+                                            .padding(.horizontal)
+                                            .padding(.bottom, 10)
+                                        }
+                                        
+                                        // Load More Button for Pagination
+                                        if !allReviewsLoaded {
+                                            Button(action: {
+                                                loadMoreReviews()
+                                            }) {
+                                                if isLoadingMore {
+                                                    ProgressView()
+                                                        .padding()
+                                                } else {
+                                                    Text("Load More")
+                                                        .font(.custom("Heebo-Regular", size: 14))
+                                                        .foregroundColor(.blue)
+                                                        .padding()
+                                                }
+                                            }
+                                            .padding(.bottom, 10)
+                                        }
+                                    }
+                                }
+                                
+                                
+                                
+                                if showRatingInput {
+                                    VStack {
+                                        Text("Rate the Product")
+                                            .font(.headline)
+                                        
+                                        Picker("Rating", selection: $userRating) {
+                                            ForEach(1...5, id: \.self) { rating in
+                                                Text("\(rating) ★").tag(rating)
+                                            }
+                                        }
+                                        .pickerStyle(SegmentedPickerStyle())
+                                        .padding()
+                                        
+                                        TextField("Leave a comment", text: $userComment)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .padding()
+                                        
+                                        Button("Submit") {
+                                            addReview() // Call the function to save the review
+                                            //                                        showRatingInput = false
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.green)
+                                        .cornerRadius(8)
+                                    }
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(radius: 10)
+                                }
+                                
+                                
+                                // Date Picker Section
+                                if showDatePicker {
+                                    VStack(spacing: 10) {
+                                        Text("Select Reminder Date & Time")
+                                            .font(.custom("Heebo-Bold", size: 16))
+                                            .foregroundColor(.gray)
+                                        
+                                        DatePicker("Reminder Date", selection: $reminderDate, displayedComponents: [.date, .hourAndMinute])
+                                            .datePickerStyle(WheelDatePickerStyle())
+                                            .labelsHidden()
+                                            .frame(maxWidth: .infinity)
+                                        
+                                        Button(action: {
+                                            withAnimation {
+                                                showDatePicker = false
+                                            }
+                                            addReminder()
+                                        }) {
+                                            Text("Set Reminder")
+                                                .font(.custom("Heebo-Bold", size: 16))
+                                                .foregroundColor(.white)
+                                                .padding()
+                                                .frame(maxWidth: .infinity)
+                                                .background(Color(hexValue: "#F2A213"))
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 10)
+                                }
+                                
+                                // Product Description (Expandable)
+                                Text(product_desc)
+                                    .font(.custom("Heebo-Regular", size: 14))
+                                    .foregroundColor(.gray)
+                                    .lineLimit(isExpanded ? nil : 3)
+                                    .onTapGesture {
+                                        withAnimation {
+                                            isExpanded.toggle()
+                                        }
+                                    }
+                                    .padding(.top, 10)
+                                
+                                if !isExpanded {
                                     Button(action: {
                                         withAnimation {
-                                            showDatePicker = false
+                                            isExpanded = true
                                         }
-                                        addReminder()
                                     }) {
-                                        Text("Set Reminder")
-                                            .font(.custom("Heebo-Bold", size: 16))
-                                            .foregroundColor(.white)
-                                            .padding()
-                                            .frame(maxWidth: .infinity)
-                                            .background(Color(hexValue: "#F2A213"))
-                                            .cornerRadius(8)
+                                        Text("Read More")
+                                            .font(.custom("Heebo-Regular", size: 14))
+                                            .foregroundColor(.black)
                                     }
+                                    .padding(.top, 5)
                                 }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 10)
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 10)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                             
-                            // Product Description (Expandable)
-                            Text(product_desc)
-                                .font(.custom("Heebo-Regular", size: 14))
-                                .foregroundColor(.gray)
-                                .lineLimit(isExpanded ? nil : 3)
-                                .onTapGesture {
-                                    withAnimation {
-                                        isExpanded.toggle()
-                                    }
-                                }
-                                .padding(.top, 10)
-
-                            if !isExpanded {
-                                Button(action: {
-                                    withAnimation {
-                                        isExpanded = true
-                                    }
-                                }) {
-                                    Text("Read More")
-                                        .font(.custom("Heebo-Regular", size: 14))
-                                        .foregroundColor(.black)
-                                }
-                                .padding(.top, 5)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                        
-                        Spacer()
-                        
-                        Divider()
-                        
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Similar Products")
-                                .font(.custom("Heebo-Bold", size: 16))
-                                .padding(.horizontal, 20)
-                                .padding(.top, 10)
+                            Spacer()
                             
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
-                                    ForEach(otherProducts, id: \.id) { product in
-                                        NavigationLink(destination: Product_Page(productID: product.id)) {
-                                            ProductCard(
-                                                imageName: product.imageName,
-                                                name: product.name,
-                                                siteName: product.siteName,
-                                                price: "\(Int(product.price))",
-                                                likes: "\(product.likes)",
-                                                rating: String(format: "%.1f", product.rating)
-                                            )
+                            Divider()
+                            
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Similar Products")
+                                    .font(.custom("Heebo-Bold", size: 16))
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 10)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
+                                        ForEach(otherProducts, id: \.id) { product in
+                                            NavigationLink(destination: Product_Page(productID: product.id)) {
+                                                ProductCard(
+                                                    imageName: product.imageName,
+                                                    name: product.name,
+                                                    siteName: product.siteName,
+                                                    price: "\(Int(product.price))",
+                                                    likes: "\(product.likes)",
+                                                    rating: String(format: "%.1f", product.rating)
+                                                )
+                                            }
                                         }
                                     }
+                                    .padding(.horizontal, 20)
                                 }
-                                .padding(.horizontal, 20)
                             }
                         }
                     }
@@ -698,9 +704,10 @@ struct Product_Page: View {
                     }
 
 //                    showReviews = true
+                    isLoading = false
                 }
 
-                isLoading = false
+//                isLoading = false
             }
     }
     
@@ -854,6 +861,7 @@ struct Product_Page: View {
                 if let sellerID = data["seller_id"] as? String {
                     fetchSellerProfile(sellerID: sellerID)
                 }
+                
             }
         }
     }
