@@ -10,14 +10,14 @@ struct Signup_Via_Email: View {
     @State private var confirmPassword: String = ""
     @State private var errorMessage: String = ""
     @State private var showAlert = false
-    @State private var navigateToLogin = false // State for navigation to the login page
-
+    @State private var navigateToLogin = false
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
                 Spacer()
                 
-                Image("App Logo") // Make sure this matches the image in your assets
+                Image("App Logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 100, height: 100)
@@ -64,20 +64,19 @@ struct Signup_Via_Email: View {
             .edgesIgnoringSafeArea(.all)
             .background(
                 NavigationLink(
-                    destination: Login_Via_Email(), // Navigate to the Login view
+                    destination: Login_Via_Email(),
                     isActive: $navigateToLogin
                 ) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
         }
-        .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
+        .navigationViewStyle(StackNavigationViewStyle())
         .navigationBarBackButtonHidden(true)
     }
     
     private func signUp() {
-        // Validate fields
         guard !email.isEmpty, !firstName.isEmpty, !lastName.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
             errorMessage = "Please fill out all fields."
             showAlert = true
@@ -90,7 +89,6 @@ struct Signup_Via_Email: View {
             return
         }
         
-        // Create a new user with Firebase Authentication
         Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             if let error = error {
                 errorMessage = "Error: \(error.localizedDescription)"
@@ -104,7 +102,6 @@ struct Signup_Via_Email: View {
                 return
             }
             
-            // Save user information to Firestore
             let db = Firestore.firestore()
             let userData: [String: Any] = [
                 "name": "\(firstName) \(lastName)",
@@ -119,14 +116,12 @@ struct Signup_Via_Email: View {
                     return
                 }
                 
-                // Optional: Update user profile with display name
                 let changeRequest = user.createProfileChangeRequest()
                 changeRequest.displayName = "\(firstName) \(lastName)"
                 changeRequest.commitChanges { error in
                     if let error = error {
                         errorMessage = "Error updating profile: \(error.localizedDescription)"
                     } else {
-                        // Navigate to Login page on success
                         errorMessage = "Sign Up Successful! Redirecting to Login..."
                         showAlert = true
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

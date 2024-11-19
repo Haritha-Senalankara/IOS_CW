@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct onboarding: View {
-    @State private var navigateToLoginSignup = false // State to trigger navigation
-    @State private var navigateToHome = false // State to navigate directly to Home()
-
+    @State private var navigateToLoginSignup = false
+    @State private var navigateToHome = false
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
                 Spacer()
                 
-                Image("App Logo") // Make sure this matches the image in your assets
+                Image("App Logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 133, height: 121)
@@ -32,7 +32,7 @@ struct onboarding: View {
                 
                 VStack(spacing: 28) {
                     Button(action: {
-                        navigateToLoginSignup = true // Trigger navigation
+                        navigateToLoginSignup = true
                     }) {
                         Text("Sign In")
                             .frame(maxWidth: .infinity)
@@ -44,7 +44,7 @@ struct onboarding: View {
                     .padding(.horizontal, 30)
                     
                     Button(action: {
-                        navigateToLoginSignup = true // Trigger navigation
+                        navigateToLoginSignup = true
                     }) {
                         Text("Create A Profile")
                             .frame(maxWidth: .infinity)
@@ -59,15 +59,6 @@ struct onboarding: View {
                 }
                 .padding(.top, 50)
                 Spacer(minLength: 160)
-//                Button(action: {
-//                    // Skip action (you can define behavior here if needed)
-//                }) {
-//                    Text("I'll do it later")
-//                        .font(.custom("Heebo-Regular", size: 14))
-//                        .foregroundColor(Color(hex: "#102A36"))
-//                }
-//                .padding(.top, 120)
-//                .padding(.bottom, 30)
                 
                 Spacer()
             }
@@ -75,54 +66,55 @@ struct onboarding: View {
             .edgesIgnoringSafeArea(.all)
             .background(
                 NavigationLink(
-                    destination: Login_or_Signup(), // Navigate to Login_or_Signup view
+                    destination: Login_or_Signup(),
                     isActive: $navigateToLoginSignup
                 ) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
             .background(
                 NavigationLink(
-                    destination: Home(), // Navigate to Home view
+                    destination: Home(),
                     isActive: $navigateToHome
                 ) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
             .onAppear {
                 checkUserStatus()
             }
         }
-        .navigationViewStyle(StackNavigationViewStyle()) // Prevent nested NavigationViews
+        .navigationViewStyle(StackNavigationViewStyle())
         .navigationBarBackButtonHidden(true)
     }
-
-    // Check if the user is already logged in
+    
+    // Check the user's login/logout status
     private func checkUserStatus() {
-        if let _ = UserDefaults.standard.string(forKey: "userID") {
-            // If userID is found, navigate to Home
+        
+        let defaults = UserDefaults.standard
+        if defaults.dictionaryRepresentation().isEmpty {
+            print("UserDefaults are empty. Doing nothing.")
+            return
+        }
+        
+        let isLoggedOut = UserDefaults.standard.bool(forKey: "isLoggedOut")
+        
+        if isLoggedOut {
+            navigateToLoginSignup = true
+            print("User is logged out. Redirecting to login/signup page.")
+        } else if let _ = UserDefaults.standard.string(forKey: "userID") {
+            
             navigateToHome = true
+            print("User is logged in. Redirecting to home page.")
+        } else {
+            navigateToLoginSignup = true
+            print("No user ID found. Staying on login/signup page.")
         }
     }
 }
-//
-//extension Color {
-//    init(hex: String) {
-//        let scanner = Scanner(string: hex)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        self.init(red: red, green: green, blue: blue)
-//    }
-//}
+
 
 #Preview {
     onboarding()

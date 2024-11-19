@@ -198,6 +198,7 @@
 		863C0DBD2CCE13EB0014D531 /* searchly */ = {
 			isa = PBXGroup;
 			children = (
+				86B0D9F62CECBA8D0043175A /* View Models */,
 				86B37C762CE8BBAC001CC9D5 /* Classes */,
 				86B939642CDB807300EE2F09 /* Info.plist */,
 				86B939622CDB7FFF00EE2F09 /* GoogleService-Info.plist */,
@@ -260,13 +261,20 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		86B0D9F62CECBA8D0043175A /* View Models */ = {
+			isa = PBXGroup;
+			children = (
+				86B19F8A2CE0B18100A71737 /* ProductViewModel.swift */,
+			);
+			path = "View Models";
+			sourceTree = "<group>";
+		};
 		86B19F822CE0B0A100A71737 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				86B19F832CE0B0C900A71737 /* ProductModel.swift */,
 				86B19F852CE0B11C00A71737 /* AppFilterModel.swift */,
 				86B19F882CE0B15400A71737 /* ContactMethodFilterModel.swift */,
-				86B19F8A2CE0B18100A71737 /* ProductViewModel.swift */,
 				86A8765A2CE1E26A0007AB46 /* ReviewModel.swift */,
 			);
 			path = Models;

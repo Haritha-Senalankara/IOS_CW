@@ -9,24 +9,23 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-    static let shared = CoreDataManager() // Singleton instance
-
+    static let shared = CoreDataManager()
+    
     let persistentContainer: NSPersistentContainer
-
+    
     private init() {
-        // Initialize the Core Data stack with your model name
-        persistentContainer = NSPersistentContainer(name: "ProductsModel") // Replace with your Core Data model name
+        persistentContainer = NSPersistentContainer(name: "ProductsModel")
         persistentContainer.loadPersistentStores { description, error in
             if let error = error {
                 fatalError("Failed to load Core Data stack: \(error)")
             }
         }
     }
-
+    
     var context: NSManagedObjectContext {
         return persistentContainer.viewContext
     }
-
+    
     func saveProduct(
         id: String,
         name: String,
@@ -51,23 +50,21 @@ class CoreDataManager {
         product.dislikes = Int32(dislikes)
         product.rating = rating
         product.imageName = imageName
-        product.imageData = imageData // Save image data
+        product.imageData = imageData
         product.siteName = siteName
         product.categories = categories as NSArray
         product.locationLatitude = locationLatitude ?? 0.0
         product.locationLongitude = locationLongitude ?? 0.0
         product.sellerApps = sellerApps as NSArray
         product.sellerContacts = sellerContacts as NSArray
-
+        
         do {
             try self.context.save()
         } catch {
             print("Failed to save product: \(error)")
         }
     }
-
-
-    // Save changes to the context
+    
     func saveContext() {
         if context.hasChanges {
             do {

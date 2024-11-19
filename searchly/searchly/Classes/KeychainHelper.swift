@@ -6,10 +6,7 @@ struct KeychainHelper {
     
     private init() {}
     
-    /// Save data to Keychain
-    /// - Parameters:
-    ///   - key: The key under which data is stored
-    ///   - data: The data to store
+    
     func save(key: String, data: Data) {
         // Define query
         let query: [String: Any] = [
@@ -18,13 +15,10 @@ struct KeychainHelper {
             kSecValueData as String   : data
         ]
         
-        // Add data to Keychain
         SecItemAdd(query as CFDictionary, nil)
     }
     
-    /// Read data from Keychain
-    /// - Parameter key: The key under which data is stored
-    /// - Returns: The data if found, else nil
+    
     func read(key: String) -> Data? {
         // Define query
         let query: [String: Any] = [
@@ -45,8 +39,6 @@ struct KeychainHelper {
         }
     }
     
-    /// Delete data from Keychain
-    /// - Parameter key: The key under which data is stored
     func delete(key: String) {
         // Define query
         let query: [String: Any] = [
@@ -54,7 +46,6 @@ struct KeychainHelper {
             kSecAttrAccount as String : key
         ]
         
-        // Delete item from Keychain
         SecItemDelete(query as CFDictionary)
     }
 }

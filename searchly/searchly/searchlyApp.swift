@@ -11,7 +11,7 @@ import UserNotifications
 
 @main
 struct searchlyApp: App {
-
+    
     // Initialize Firebase
     init() {
         FirebaseApp.configure()
@@ -19,21 +19,21 @@ struct searchlyApp: App {
         registerForPushNotifications()
         
         // Fetch the FCM token
-            Messaging.messaging().token { token, error in
-                if let error = error {
-                    print("Error retrieving FCM token: \(error.localizedDescription)")
-                } else if let token = token {
-                    print("FCM Token: \(token)")
-                }
+        Messaging.messaging().token { token, error in
+            if let error = error {
+                print("Error retrieving FCM token: \(error.localizedDescription)")
+            } else if let token = token {
+                print("FCM Token: \(token)")
             }
+        }
     }
-
+    
     var body: some Scene {
         WindowGroup {
             Splash_View()
         }
     }
-
+    
     private func registerForPushNotifications() {
         // Request notification permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -48,10 +48,10 @@ struct searchlyApp: App {
                 print("Notification permission denied")
             }
         }
-
+        
         // Set up the UNUserNotificationCenter delegate
         UNUserNotificationCenter.current().delegate = NotificationHandler.shared
-
+        
         // Set up Firebase Messaging delegate
         Messaging.messaging().delegate = NotificationHandler.shared
     }
@@ -60,7 +60,7 @@ struct searchlyApp: App {
 // Singleton to handle notifications
 class NotificationHandler: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = NotificationHandler()
-
+    
     // Handle FCM token updates
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         if let token = fcmToken {
@@ -68,7 +68,7 @@ class NotificationHandler: NSObject, UNUserNotificationCenterDelegate, Messaging
             // You can send this token to your server for push notifications
         }
     }
-
+    
     // Handle notifications received in the foreground
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
@@ -76,7 +76,7 @@ class NotificationHandler: NSObject, UNUserNotificationCenterDelegate, Messaging
         print("Foreground notification received: \(notification.request.content.userInfo)")
         completionHandler([.alert, .sound, .badge])
     }
-
+    
     // Handle notifications when the app is tapped/opened
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,

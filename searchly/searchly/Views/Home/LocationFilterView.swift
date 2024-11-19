@@ -7,23 +7,23 @@ import CoreLocation
 class LocationSearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
     @Published var suggestions: [MKLocalSearchCompletion] = [] // Holds search suggestions
     private let completer = MKLocalSearchCompleter()
-
+    
     override init() {
         super.init()
         completer.resultTypes = .address // Specify result types
         completer.delegate = self
     }
-
+    
     func updateSearch(query: String) {
         completer.queryFragment = query // Updates the query fragment
     }
-
+    
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         DispatchQueue.main.async {
             self.suggestions = completer.results // Populate suggestions
         }
     }
-
+    
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
         print("Search completer error: \(error.localizedDescription)")
     }
@@ -35,16 +35,16 @@ struct LocationFilterView: View {
     @Binding var selectedRadius: Double
     @Binding var isPresented: Bool
     var onApply: () -> Void
-
+    
     @State private var centerCoordinate: CLLocationCoordinate2D?
     @State private var searchQuery: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var userAddress: String = "Fetching current location..."
-
+    
     @StateObject private var locationManager = LocationManager()
     @StateObject private var searchCompleter = LocationSearchCompleter()
-
+    
     var body: some View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 20) {
@@ -74,7 +74,7 @@ struct LocationFilterView: View {
                         )
                 }
                 .padding(.horizontal, 20)
-
+                
                 // Current Location Button
                 Button(action: {
                     locationManager.requestLocation { location, address in
@@ -99,7 +99,7 @@ struct LocationFilterView: View {
                     .cornerRadius(10)
                 }
                 .padding(.horizontal, 20)
-
+                
                 // Current Location Address
                 VStack(spacing: 10) {
                     Text("Your Current Location:")
@@ -109,23 +109,23 @@ struct LocationFilterView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 20)
-
+                
                 // Map View
                 MapViewRepresentable(centerCoordinate: $centerCoordinate, selectedRadius: $selectedRadius)
                     .frame(height: 300)
                     .cornerRadius(12)
                     .padding(.horizontal, 20)
-
+                
                 // Radius Slider
                 VStack(spacing: 10) {
                     Text("Radius: \(Int(selectedRadius)) meters")
                         .font(.system(size: 16, weight: .regular))
-
+                    
                     Slider(value: $selectedRadius, in: 100...5000, step: 50)
                         .accentColor(.orange)
                         .padding(.horizontal, 20)
                 }
-
+                
                 // Apply Button
                 Button(action: {
                     isPresented = false
@@ -140,7 +140,7 @@ struct LocationFilterView: View {
                         .cornerRadius(10)
                 }
                 .padding(.horizontal, 20)
-
+                
                 Spacer()
             }
             .padding(.bottom, 30)
@@ -157,7 +157,7 @@ struct LocationFilterView: View {
             .alert(isPresented: $showAlert) {
                 Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             }
-
+            
             // Suggestions Overlay
             if !searchCompleter.suggestions.isEmpty {
                 VStack(alignment: .leading) {
@@ -191,7 +191,7 @@ struct LocationFilterView: View {
             }
         }
     }
-
+    
     func performGeocoding(for query: String) {
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(query) { placemarks, error in
@@ -214,13 +214,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var currentLocation: CLLocationCoordinate2D?
     private let locationManager = CLLocationManager()
     private var locationCompletion: ((CLLocationCoordinate2D?, String?) -> Void)?
-
+    
     override init() {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
             currentLocation = location.coordinate
@@ -238,10 +238,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
-
+    
     func requestLocation(completion: @escaping (CLLocationCoordinate2D?, String?) -> Void) {
         self.locationCompletion = completion
-
+        
         // Check Location Authorization Status
         switch locationManager.authorizationStatus {
         case .notDetermined:
@@ -254,7 +254,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             completion(nil, "Unknown location authorization status.")
         }
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to find user's location: \(error.localizedDescription)")
         if let locationCompletion = locationCompletion {

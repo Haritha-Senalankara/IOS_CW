@@ -2,16 +2,15 @@ import Foundation
 import SwiftUI
 import FirebaseFirestore
 import MapKit
-import Network // Import for network monitoring
+import Network
 import CoreData
 
 class ProductViewModel: ObservableObject {
     @Published var products: [Products] = []
     private let db = Firestore.firestore()
     
-    // Additional properties for filtering
-    var selectedMinPrice: Double = 0 // Default minimum price
-    var selectedMaxPrice: Double = 1000000 // Default maximum price
+    var selectedMinPrice: Double = 0
+    var selectedMaxPrice: Double = 1000000
     var selectedLocation: CLLocationCoordinate2D?
     var selectedRadius: Double?
     var selectedRating: Double?
@@ -24,42 +23,35 @@ class ProductViewModel: ObservableObject {
     @Published var allAppFilters: [AppFilter] = []
     @Published var allContactMethodFilters: [ContactMethodFilter] = []
     
-    // Network connectivity tracking
-   private var isConnected: Bool = true
-   private let monitor = NWPathMonitor()
-   private let monitorQueue = DispatchQueue.global(qos: .background)
-
-   init() {
-       // Start monitoring network connectivity
-       monitor.pathUpdateHandler = { [weak self] path in
-           DispatchQueue.main.async {
-               self?.isConnected = path.status == .satisfied
-           }
-       }
-       monitor.start(queue: monitorQueue)
-   }
-    // Check if the device is online
+    private var isConnected: Bool = true
+    private let monitor = NWPathMonitor()
+    private let monitorQueue = DispatchQueue.global(qos: .background)
+    
+    init() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                self?.isConnected = path.status == .satisfied
+            }
+        }
+        monitor.start(queue: monitorQueue)
+    }
     private func isOnline() -> Bool {
         return isConnected
     }
     
     func fetchProducts(sellerID: String? = nil) {
         if isOnline() {
-            // Online: Fetch products from Firestore
             print("Device is online. Fetching products from Firestore...")
             fetchProductsFromFirestore(sellerID: sellerID)
         } else {
-            // Offline: Fetch products from Core Data
             print("Device is offline. Fetching products from Core Data...")
             fetchProductsFromCoreData()
         }
     }
-
-    /// Fetch products from Firestore
+    
     func fetchProductsFromFirestore(sellerID: String? = nil) {
         var query: Query = db.collection("products")
         
-        // If a sellerID is provided, filter by it
         if let sellerID = sellerID {
             query = query.whereField("seller_id", isEqualTo: sellerID)
         }
@@ -73,7 +65,7 @@ class ProductViewModel: ObservableObject {
             }
             
             var fetchedProducts: [Products] = []
-            let group = DispatchGroup() // Handle asynchronous queries
+            let group = DispatchGroup()
             
             snapshot?.documents.forEach { document in
                 let data = document.data()
@@ -151,90 +143,90 @@ class ProductViewModel: ObservableObject {
                     
                     
                     // Download image data
-                                    if let imageURL = URL(string: imageName) {
-                                        URLSession.shared.dataTask(with: imageURL) { imageData, response, error in
-                                            defer { group.leave() }
-                                            
-                                            if let imageData = imageData {
-                                                // Create product object
-                                                let product = Products(
-                                                    id: document.documentID,
-                                                    name: name,
-                                                    price: price,
-                                                    siteName: sellerName,
-                                                    likes: likes,
-                                                    dislikes: dislikes,
-                                                    rating: rating,
-                                                    categories: categories,
-                                                    imageName: imageName,
-                                                    imageData: imageData, // Include image data
-                                                    location: sellerLocation,
-                                                    sellerApps: sellerApps,
-                                                    sellerContacts: sellerContacts
-                                                )
-                                                
-                                                // Save to Core Data
-                                                CoreDataManager.shared.saveProduct(
-                                                    id: product.id,
-                                                    name: product.name,
-                                                    price: product.price,
-                                                    likes: product.likes,
-                                                    dislikes: product.dislikes,
-                                                    rating: product.rating,
-                                                    imageName: product.imageName,
-                                                    imageData: product.imageData, // Include image data
-                                                    siteName: product.siteName,
-                                                    categories: product.categories,
-                                                    locationLatitude: product.location?.latitude,
-                                                    locationLongitude: product.location?.longitude,
-                                                    sellerApps: product.sellerApps,
-                                                    sellerContacts: product.sellerContacts
-                                                )
-                                                
-                                                fetchedProducts.append(product)
-                                            } else {
-                                                print("Error downloading image: \(error?.localizedDescription ?? "Unknown error")")
-                                                // Handle error (e.g., proceed without image data)
-                                                let product = Products(
-                                                    id: document.documentID,
-                                                    name: name,
-                                                    price: price,
-                                                    siteName: sellerName,
-                                                    likes: likes,
-                                                    dislikes: dislikes,
-                                                    rating: rating,
-                                                    categories: categories,
-                                                    imageName: imageName,
-                                                    imageData: nil, // No image data
-                                                    location: sellerLocation,
-                                                    sellerApps: sellerApps,
-                                                    sellerContacts: sellerContacts
-                                                )
-                                                
-                                                CoreDataManager.shared.saveProduct(
-                                                    id: product.id,
-                                                    name: product.name,
-                                                    price: product.price,
-                                                    likes: product.likes,
-                                                    dislikes: product.dislikes,
-                                                    rating: product.rating,
-                                                    imageName: product.imageName,
-                                                    imageData: nil, // No image data
-                                                    siteName: product.siteName,
-                                                    categories: product.categories,
-                                                    locationLatitude: product.location?.latitude,
-                                                    locationLongitude: product.location?.longitude,
-                                                    sellerApps: product.sellerApps,
-                                                    sellerContacts: product.sellerContacts
-                                                )
-                                                
-                                                fetchedProducts.append(product)
-                                            }
-                                        }.resume()
-                                    } else {
-                                        // Handle invalid image URL
-                                        group.leave()
-                                    }
+                    if let imageURL = URL(string: imageName) {
+                        URLSession.shared.dataTask(with: imageURL) { imageData, response, error in
+                            defer { group.leave() }
+                            
+                            if let imageData = imageData {
+                                // Create product object
+                                let product = Products(
+                                    id: document.documentID,
+                                    name: name,
+                                    price: price,
+                                    siteName: sellerName,
+                                    likes: likes,
+                                    dislikes: dislikes,
+                                    rating: rating,
+                                    categories: categories,
+                                    imageName: imageName,
+                                    imageData: imageData, // Include image data
+                                    location: sellerLocation,
+                                    sellerApps: sellerApps,
+                                    sellerContacts: sellerContacts
+                                )
+                                
+                                // Save to Core Data
+                                CoreDataManager.shared.saveProduct(
+                                    id: product.id,
+                                    name: product.name,
+                                    price: product.price,
+                                    likes: product.likes,
+                                    dislikes: product.dislikes,
+                                    rating: product.rating,
+                                    imageName: product.imageName,
+                                    imageData: product.imageData, // Include image data
+                                    siteName: product.siteName,
+                                    categories: product.categories,
+                                    locationLatitude: product.location?.latitude,
+                                    locationLongitude: product.location?.longitude,
+                                    sellerApps: product.sellerApps,
+                                    sellerContacts: product.sellerContacts
+                                )
+                                
+                                fetchedProducts.append(product)
+                            } else {
+                                print("Error downloading image: \(error?.localizedDescription ?? "Unknown error")")
+                                // Handle error (e.g., proceed without image data)
+                                let product = Products(
+                                    id: document.documentID,
+                                    name: name,
+                                    price: price,
+                                    siteName: sellerName,
+                                    likes: likes,
+                                    dislikes: dislikes,
+                                    rating: rating,
+                                    categories: categories,
+                                    imageName: imageName,
+                                    imageData: nil, // No image data
+                                    location: sellerLocation,
+                                    sellerApps: sellerApps,
+                                    sellerContacts: sellerContacts
+                                )
+                                
+                                CoreDataManager.shared.saveProduct(
+                                    id: product.id,
+                                    name: product.name,
+                                    price: product.price,
+                                    likes: product.likes,
+                                    dislikes: product.dislikes,
+                                    rating: product.rating,
+                                    imageName: product.imageName,
+                                    imageData: nil, // No image data
+                                    siteName: product.siteName,
+                                    categories: product.categories,
+                                    locationLatitude: product.location?.latitude,
+                                    locationLongitude: product.location?.longitude,
+                                    sellerApps: product.sellerApps,
+                                    sellerContacts: product.sellerContacts
+                                )
+                                
+                                fetchedProducts.append(product)
+                            }
+                        }.resume()
+                    } else {
+                        // Handle invalid image URL
+                        group.leave()
+                    }
                 }
             }
             
@@ -247,7 +239,7 @@ class ProductViewModel: ObservableObject {
     
     func fetchProductsFromCoreData() {
         let fetchRequest: NSFetchRequest<Product> = Product.fetchRequest()
-
+        
         do {
             let coreDataProducts = try CoreDataManager.shared.context.fetch(fetchRequest)
             let fetchedProducts = coreDataProducts.map { coreDataProduct in
@@ -270,7 +262,7 @@ class ProductViewModel: ObservableObject {
                     sellerContacts: coreDataProduct.sellerContacts as? [ContactMethodFilter] ?? []
                 )
             }
-
+            
             DispatchQueue.main.async {
                 self.allProducts = fetchedProducts
                 print(self.allProducts)
@@ -333,7 +325,7 @@ class ProductViewModel: ObservableObject {
     
     func applyFilters() {
         var filteredProducts = allProducts
-
+        
         // Filter by price range
         filteredProducts = filteredProducts.filter { product in
             if let productPrice = Double("\(product.price)"),
@@ -343,7 +335,7 @@ class ProductViewModel: ObservableObject {
                 return false
             }
         }
-
+        
         // Filter by location
         if let selectedLocation = selectedLocation, let selectedRadius = selectedRadius {
             filteredProducts = filteredProducts.filter { product in
@@ -357,7 +349,7 @@ class ProductViewModel: ObservableObject {
                 }
             }
         }
-
+        
         // Filter by rating
         if let selectedRating = selectedRating, selectedRating > 0 {
             filteredProducts = filteredProducts.filter { product in
@@ -365,7 +357,7 @@ class ProductViewModel: ObservableObject {
                 return productRating >= selectedRating
             }
         }
-
+        
         // Filter by likes
         if let selectedLikes = selectedLikes, selectedLikes > 0 {
             filteredProducts = filteredProducts.filter { product in
@@ -373,7 +365,7 @@ class ProductViewModel: ObservableObject {
                 return product.likes >= selectedLikes
             }
         }
-
+        
         // Filter by app filters
         if let selectedAppFilters = selectedAppFilters, !selectedAppFilters.isEmpty {
             filteredProducts = filteredProducts.filter { product in
@@ -381,7 +373,7 @@ class ProductViewModel: ObservableObject {
                 return !Set(selectedAppFilters).isDisjoint(with: productAppIDs)
             }
         }
-
+        
         // Filter by contact method filters
         if let selectedContactMethodFilters = selectedContactMethodFilters, !selectedContactMethodFilters.isEmpty {
             filteredProducts = filteredProducts.filter { product in
@@ -389,18 +381,18 @@ class ProductViewModel: ObservableObject {
                 return !Set(selectedContactMethodFilters).isDisjoint(with: productContactMethodIDs)
             }
         }
-
+        
         // Filter by search text
         if let searchText = searchText, !searchText.isEmpty {
             filteredProducts = filteredProducts.filter {
                 $0.name.lowercased().contains(searchText.lowercased())
             }
         }
-
+        
         DispatchQueue.main.async {
             self.products = filteredProducts
         }
     }
-
-
+    
+    
 }

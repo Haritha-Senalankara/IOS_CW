@@ -7,20 +7,20 @@ struct Customer_Profile: View {
     @State private var profileImageURL: String = ""
     @State private var isLoading: Bool = true
     @State private var navigateToOnboarding: Bool = false
-
+    
     // Additional Profile Fields
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var phoneNumber: String = ""
     @State private var gender: String = "Male"
-
+    
     @State private var recentlyViewedProducts: [Products] = []
-    @State private var generatedOTP: String = "" // Temporary OTP
-    @State private var enteredOTP: String = "" // For user OTP input
-    @State private var showOTPPopup: Bool = false // To show OTP popup
-
+    @State private var generatedOTP: String = ""
+    @State private var enteredOTP: String = ""
+    @State private var showOTPPopup: Bool = false
+    
     private let db = Firestore.firestore()
-
+    
     var body: some View {
         VStack(spacing: 0) {
             // Profile Picture and Name Section
@@ -47,7 +47,7 @@ struct Customer_Profile: View {
                             .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
                     }
                 }
-
+                
                 HStack(spacing: 8) {
                     Text(name)
                         .font(.custom("Heebo-Bold", size: 18))
@@ -56,7 +56,7 @@ struct Customer_Profile: View {
             }
             .padding(.bottom, 40)
             .padding(.top, 50)
-
+            
             // Profile Editing Section
             VStack(spacing: 20) {
                 HStack {
@@ -66,7 +66,7 @@ struct Customer_Profile: View {
                     TextField("Enter first name", text: $firstName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
-
+                
                 HStack {
                     Text("Last Name")
                         .font(.headline)
@@ -74,7 +74,7 @@ struct Customer_Profile: View {
                     TextField("Enter last name", text: $lastName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
-
+                
                 HStack {
                     Text("Phone")
                         .font(.headline)
@@ -83,7 +83,7 @@ struct Customer_Profile: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.phonePad)
                 }
-
+                
                 HStack {
                     Text("Gender")
                         .font(.headline)
@@ -94,7 +94,7 @@ struct Customer_Profile: View {
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
-
+                
                 Button(action: generateAndSendOTP) {
                     Text("Save")
                         .font(.custom("Heebo-Bold", size: 16))
@@ -107,17 +107,17 @@ struct Customer_Profile: View {
                 .padding(.top, 20)
             }
             .padding(.horizontal, 20)
-
+            
             Spacer()
             Divider()
-
+            
             // Recently Viewed Products Section
             VStack(alignment: .leading, spacing: 10) {
                 Text("Recently Viewed Products")
                     .font(.custom("Heebo-Bold", size: 16))
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-
+                
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
                         ForEach(recentlyViewedProducts, id: \.id) { product in
@@ -151,23 +151,23 @@ struct Customer_Profile: View {
             )
         }
     }
-
+    
     // MARK: - Generate and Send OTP
     private func generateAndSendOTP() {
         guard !phoneNumber.isEmpty else {
             print("Phone number is empty")
             return
         }
-
+        
         // Generate a random 6-digit OTP
         generatedOTP = String(format: "%06d", Int.random(in: 100000...999999))
-
+        
         // Save OTP in Firestore
         let otpData: [String: Any] = [
             "to": "\(phoneNumber)",
             "otp_msg": "Your OTP is \(generatedOTP)"
         ]
-
+        
         db.collection("OTP").addDocument(data: otpData) { error in
             if let error = error {
                 print("Error saving OTP: \(error.localizedDescription)")
@@ -178,7 +178,7 @@ struct Customer_Profile: View {
             }
         }
     }
-
+    
     // MARK: - Verify OTP
     private func verifyOTP() {
         if enteredOTP == generatedOTP {
@@ -188,14 +188,14 @@ struct Customer_Profile: View {
             print("Invalid OTP")
         }
     }
-
+    
     // MARK: - Save Profile to Firestore
     private func saveProfile() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found")
             return
         }
-
+        
         let updatedData: [String: Any] = [
             "first_name": firstName,
             "last_name": lastName,
@@ -203,7 +203,7 @@ struct Customer_Profile: View {
             "gender": gender,
             "name": "\(firstName) \(lastName)"
         ]
-
+        
         db.collection("customers").document(userID).setData(updatedData, merge: true) { error in
             if let error = error {
                 print("Error updating profile: \(error.localizedDescription)")
@@ -212,20 +212,20 @@ struct Customer_Profile: View {
             }
         }
     }
-
+    
     // MARK: - Fetch Customer Profile
     private func fetchCustomerProfile() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
             return
         }
-
+        
         db.collection("customers").document(userID).getDocument { document, error in
             if let error = error {
                 print("Error fetching customer profile: \(error.localizedDescription)")
                 return
             }
-
+            
             if let document = document, document.exists {
                 let data = document.data()
                 DispatchQueue.main.async {
@@ -242,30 +242,30 @@ struct Customer_Profile: View {
             }
         }
     }
-
+    
     // MARK: - Fetch Recently Viewed Products
     private func fetchRecentlyViewedProducts() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
             return
         }
-
+        
         db.collection("customers").document(userID).getDocument { document, error in
             if let error = error {
                 print("Error fetching customer data: \(error.localizedDescription)")
                 return
             }
-
+            
             guard let document = document, document.exists, let data = document.data() else {
                 print("No document found for user ID: \(userID)")
                 return
             }
-
+            
             guard let recentlyVisitedData = data["recently_visited_products"] as? [[String: Any]] else {
                 print("No recently visited products found for user ID: \(userID)")
                 return
             }
-
+            
             let sortedVisited = recentlyVisitedData.compactMap { dict -> (String, Date)? in
                 guard let productID = dict["productID"] as? String,
                       let timestamp = dict["timestamp"] as? Timestamp else {
@@ -273,14 +273,14 @@ struct Customer_Profile: View {
                 }
                 return (productID, timestamp.dateValue())
             }.sorted { $0.1 > $1.1 }
-
+            
             let productIDs = Array(Set(sortedVisited.map { $0.0 })).prefix(10)
-
+            
             if productIDs.isEmpty {
                 print("No recently viewed products to display.")
                 return
             }
-
+            
             db.collection("products")
                 .whereField(FieldPath.documentID(), in: Array(productIDs))
                 .getDocuments { snapshot, error in
@@ -288,12 +288,12 @@ struct Customer_Profile: View {
                         print("Error fetching products: \(error.localizedDescription)")
                         return
                     }
-
+                    
                     guard let documents = snapshot?.documents else {
                         print("No products found.")
                         return
                     }
-
+                    
                     let products: [Products] = documents.compactMap { doc in
                         let data = doc.data()
                         let id = doc.documentID
@@ -307,7 +307,7 @@ struct Customer_Profile: View {
                         let ratingString = data["rating"] as? String ?? "\(data["rating"] as? Double ?? 0.0)"
                         let rating = Double(ratingString) ?? 0.0
                         let categories = data["categories"] as? [String] ?? []
-
+                        
                         return Products(
                             id: id,
                             name: name,
@@ -320,11 +320,11 @@ struct Customer_Profile: View {
                             imageName: imageName
                         )
                     }
-
+                    
                     let sortedProducts = productIDs.compactMap { id in
                         products.first(where: { $0.id == id })
                     }
-
+                    
                     DispatchQueue.main.async {
                         self.recentlyViewedProducts = sortedProducts
                     }
@@ -338,16 +338,16 @@ struct OTPVerificationPopup: View {
     @Binding var enteredOTP: String
     let generatedOTP: String
     let onVerify: () -> Void
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Verify OTP")
                 .font(.headline)
-
+            
             TextField("Enter OTP", text: $enteredOTP)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .keyboardType(.numberPad)
-
+            
             Button(action: onVerify) {
                 Text("Verify")
                     .font(.headline)
@@ -357,7 +357,7 @@ struct OTPVerificationPopup: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
             }
-
+            
             Button(action: {
                 UIApplication.shared.windows.first?.rootViewController?.dismiss(animated: true)
             }) {

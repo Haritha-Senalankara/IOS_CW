@@ -13,54 +13,53 @@ struct Product_Page: View {
     // MARK: - Share Sheet Properties
     @State private var showShareSheet: Bool = false
     
-    @State private var product_img: String = "" // Initialize as empty string
-    @State private var seller_profile_img_link: String = "" // Initialize as empty string
-
-    @State private var isLoading: Bool = true // Show loading indicator
-    let productID: String // Accept product ID as a parameter
+    @State private var product_img: String = ""
+    @State private var seller_profile_img_link: String = ""
+    
+    @State private var isLoading: Bool = true
+    let productID: String
     @State private var isExpanded: Bool = false
-
-    @State private var showRatingInput: Bool = false // Toggle for showing rating input
+    
+    @State private var showRatingInput: Bool = false
     @State private var userRating: Int = 5
     @State private var userComment: String = ""
-
-    @State private var showReviews: Bool = false // Show all reviews
+    
+    @State private var showReviews: Bool = false
     @State private var reviews: [Review] = []
-
-    @State private var showDatePicker: Bool = false // Show/Hide DatePicker
-    @State private var reminderDate: Date = Date() // Selected reminder date and time
-
-    private let db = Firestore.firestore() // Firestore reference
+    
+    @State private var showDatePicker: Bool = false
+    @State private var reminderDate: Date = Date()
+    
+    private let db = Firestore.firestore()
     private let eventStore = EKEventStore()
-
+    
     // Variables for product details
     @State private var product_name: String = ""
     @State private var seller_name: String = ""
     @State private var seller_likes: String = ""
-    @State private var seller_id: String = "" // Seller ID for navigation
+    @State private var seller_id: String = ""
     @State private var product_likes: Int = 0
     @State private var product_dislikes: Int = 0
-    @State private var product_ratings: Double = 0 // Average rating
+    @State private var product_ratings: Double = 0
     @State private var product_desc: String = ""
     
     @State private var product_price: String = ""
-
+    
     @State private var otherProducts: [Products] = []
-
-    // New state variables for favorite and like/dislike functionality
+    
     @State private var isFavorite: Bool = false
     @State private var hasLiked: Bool = false
     @State private var hasDisliked: Bool = false
     @State private var userID: String = ""
     
     @State private var searchText: String = ""
-
+    
     @State private var navigateToProfile = false
     @State private var navigateToNotification = false
     
     @State private var displayedReviews: [Review] = []
-    @State private var reviewsToShow: Int = 5 // Number of reviews to show initially
-
+    @State private var reviewsToShow: Int = 5
+    
     
     // MARK: - Alert Properties
     @State private var showingAlert: Bool = false
@@ -72,7 +71,7 @@ struct Product_Page: View {
     @State private var isLoadingMore: Bool = false
     @State private var allReviewsLoaded: Bool = false
     let pageSize = 5 // Number of reviews per page
-
+    
     private var formattedPrice: String {
         // Attempt to convert price string to Double
         if let priceDouble = Double(product_price) {
@@ -83,13 +82,10 @@ struct Product_Page: View {
             if let formatted = formatter.string(from: NSNumber(value: priceDouble)) {
                 return "Rs." + formatted
             } else {
-                // If formatting fails, return the original price and log the issue
                 print("NumberFormatter failed to format the price: \(priceDouble)")
                 return product_price
             }
         } else {
-            // If conversion fails, log the reason and return the original price string
-//            print("Failed to convert price string '\(price)' to Double.")
             return product_price
         }
     }
@@ -132,7 +128,7 @@ struct Product_Page: View {
                                         .frame(height: 250)
                                         .padding(.horizontal, 20)
                                 case .failure:
-                                    Image(systemName: "photo") // Use a system image or your default image
+                                    Image(systemName: "photo")
                                         .resizable()
                                         .scaledToFit()
                                         .frame(height: 250)
@@ -155,7 +151,7 @@ struct Product_Page: View {
                                     Image(isFavorite ? "heart-icon-filled" : "heart-icon-only-border")
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 24, height: 24)
+                                        .frame(width: 22, height: 22)
                                         .onTapGesture {
                                             toggleFavorite()
                                         }
@@ -258,7 +254,7 @@ struct Product_Page: View {
                                                 HStack {
                                                     Text(review.userName)
                                                         .font(.subheadline)
-                                                        .foregroundColor(.black) // Optional: Make the username stand out
+                                                        .foregroundColor(.black)
                                                     Spacer()
                                                     Text("\(review.rating) ★")
                                                         .font(.subheadline)
@@ -318,8 +314,7 @@ struct Product_Page: View {
                                             .padding()
                                         
                                         Button("Submit") {
-                                            addReview() // Call the function to save the review
-                                            //                                        showRatingInput = false
+                                            addReview()
                                         }
                                         .foregroundColor(.white)
                                         .padding()
@@ -364,11 +359,9 @@ struct Product_Page: View {
                                     .background(Color.white)
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                                    .padding(.horizontal, 20)
                                     .padding(.top, 10)
                                 }
                                 
-                                // Product Description (Expandable)
                                 Text(product_desc)
                                     .font(.custom("Heebo-Regular", size: 14))
                                     .foregroundColor(.gray)
@@ -430,84 +423,78 @@ struct Product_Page: View {
                         }
                     }
                 }
-                }
-                .background(Color.white)
-                .edgesIgnoringSafeArea(.all)
-                
             }
-            .onAppear {
-                // Get user ID from UserDefaults
-                if let uid = UserDefaults.standard.string(forKey: "userID") {
-                    self.userID = uid
-                    checkIfFavorite()
-                    checkUserInteraction()
-                } else {
-                    print("User ID not found in UserDefaults")
-                }
-
-                fetchProductDetails()
-                fetchOtherProducts()
-                fetchReviews()
-                
-                updateRecentlyVisitedProducts()
+            .background(Color.white)
+            .edgesIgnoringSafeArea(.all)
+            
+        }
+        .onAppear {
+            if let uid = UserDefaults.standard.string(forKey: "userID") {
+                self.userID = uid
+                checkIfFavorite()
+                checkUserInteraction()
+            } else {
+                print("User ID not found in UserDefaults")
             }
-            // Sheets for Profile and Notifications
-            .sheet(isPresented: $navigateToProfile) {
-                Customer_Profile()
-            }
-            .sheet(isPresented: $navigateToNotification) {
-                Notifications()
-            }
-            .alert(isPresented: $showingAlert) {
-                Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
-            }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = URL(string: product_img) {
-                    ShareSheet(items: [product_name, url])
-                } else {
-                    ShareSheet(items: [product_name]) // Share only product name if URL is invalid
-                }
+            
+            fetchProductDetails()
+            fetchOtherProducts()
+            fetchReviews()
+            
+            updateRecentlyVisitedProducts()
+        }
+        .sheet(isPresented: $navigateToProfile) {
+            Customer_Profile()
+        }
+        .sheet(isPresented: $navigateToNotification) {
+            Notifications()
+        }
+        .alert(isPresented: $showingAlert) {
+            Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = URL(string: product_img) {
+                ShareSheet(items: [product_name, url])
+            } else {
+                ShareSheet(items: [product_name])
             }
         }
-
+    }
+    
     // Add this function inside the Product_Page struct
     private func updateRecentlyVisitedProducts() {
         guard !userID.isEmpty else { return }
-
+        
         let customerRef = db.collection("customers").document(userID)
-
+        
         customerRef.getDocument { snapshot, error in
             if let error = error {
                 print("Error fetching customer data: \(error)")
                 return
             }
-
+            
             guard let data = snapshot?.data() else {
                 print("No customer data found for ID: \(userID)")
                 return
             }
-
-            // Retrieve the current recently_visited_products array
+            
             var recentlyVisited = data["recently_visited_products"] as? [[String: Any]] ?? []
-
-            // Remove any existing entry for the current productID
             recentlyVisited.removeAll { $0["productID"] as? String == productID }
-
-            // Create a new entry with the current timestamp
+            
+            
             let newEntry: [String: Any] = [
                 "productID": productID,
                 "timestamp": Timestamp(date: Date())
             ]
-
-            // Prepend the new entry to the list
+            
+            
             recentlyVisited.insert(newEntry, at: 0)
-
-            // Trim the list to the first 10 items
+            
+            
             if recentlyVisited.count > 10 {
                 recentlyVisited = Array(recentlyVisited.prefix(10))
             }
-
-            // Update the Firestore document with the modified list
+            
             customerRef.updateData([
                 "recently_visited_products": recentlyVisited
             ]) { error in
@@ -519,10 +506,8 @@ struct Product_Page: View {
             }
         }
     }
-
     
-    // MARK: - Recalculate Average Rating Function
-    // MARK: - Recalculate Average Rating Function
+    
     private func recalculateAverageRating() {
         db.collection("products").document(productID).collection("reviews").getDocuments { snapshot, error in
             if let error = error {
@@ -531,20 +516,20 @@ struct Product_Page: View {
                 isLoading = false
                 return
             }
-
+            
             guard let documents = snapshot?.documents else {
                 print("No reviews data found for product ID: \(productID)")
                 showAlert(title: "Error", message: "No reviews found.")
                 isLoading = false
                 return
             }
-
+            
             let totalRatings = documents.compactMap { $0.data()["rating"] as? Int }.reduce(0, +)
             let count = documents.count
             let average = count > 0 ? Double(totalRatings) / Double(count) : 0.0
-
+            
             print("Total Ratings: \(totalRatings), Count: \(count), Average: \(average)")
-
+            
             // Update the average rating in the product document
             db.collection("products").document(productID).updateData([
                 "rating": average
@@ -555,8 +540,8 @@ struct Product_Page: View {
                     isLoading = false
                     return
                 }
-
-                // Update local state
+                
+                
                 DispatchQueue.main.async {
                     self.product_ratings = average
                     self.userRating = 5
@@ -565,19 +550,19 @@ struct Product_Page: View {
                     showAlert(title: "Success", message: "Your review has been added.")
                     isLoading = false
                     fetchReviews()
-                    showReviews = true // Ensure reviews are shown after adding a review
+                    showReviews = true
                 }
             }
         }
     }
-
-
-
+    
+    
+    
     
     private func shareProduct() {
         showShareSheet = true
     }
-
+    
     private func addReview() {
         guard !userID.isEmpty else {
             showAlert(title: "Error", message: "You must be logged in to add a review.")
@@ -586,17 +571,15 @@ struct Product_Page: View {
         
         print("Submitting review with comment: \(userComment)")
         
-        // Prevent multiple reviews
         if reviews.contains(where: { $0.userID == userID }) {
             showAlert(title: "Error", message: "You have already submitted a review for this product.")
             return
         }
-
+        
         isLoading = true
         
         print("Fetching user data from Firestore")
         
-        // Fetch the user's name from the "customers" collection
         db.collection("customers").document(userID).getDocument { snapshot, error in
             if let error = error {
                 print("Error fetching user data: \(error)")
@@ -604,7 +587,7 @@ struct Product_Page: View {
                 isLoading = false
                 return
             }
-
+            
             guard let data = snapshot?.data(),
                   let userName = data["name"] as? String else {
                 print("No customer data found for ID: \(userID)")
@@ -621,12 +604,11 @@ struct Product_Page: View {
                 "userName": userName,
                 "rating": userRating,
                 "comment": userComment,
-                "timestamp": Timestamp() // Added timestamp for ordering
+                "timestamp": Timestamp()
             ]
             
             print("Adding review to Firestore with ID: \(reviewID)")
             
-            // Add the new review to the "reviews" subcollection
             db.collection("products").document(productID).collection("reviews").document(reviewID).setData(reviewData) { error in
                 if let error = error {
                     print("Error adding review: \(error.localizedDescription)")
@@ -634,27 +616,25 @@ struct Product_Page: View {
                     isLoading = false
                     return
                 }
-
+                
                 print("Review added successfully. Updating user's review list.")
                 
-                // Optionally, update the user's profile with the review ID
                 db.collection("customers").document(userID).updateData([
                     "reviews": FieldValue.arrayUnion([reviewID])
                 ]) { error in
                     if let error = error {
                         print("Error updating user's review list: \(error.localizedDescription)")
-                        // Optionally handle the error
+                        
                     }
                 }
-
-                // Recalculate the average rating after adding the review
+                
                 recalculateAverageRating()
             }
         }
     }
-
-
-
+    
+    
+    
     private func fetchReviews() {
         isLoading = true
         db.collection("products").document(productID).collection("reviews")
@@ -667,24 +647,23 @@ struct Product_Page: View {
                     isLoading = false
                     return
                 }
-
+                
                 guard let documents = snapshot?.documents, !documents.isEmpty else {
                     print("No reviews found")
-//                    showAlert(title: "Info", message: "No reviews yet.")
                     isLoading = false
                     allReviewsLoaded = true
                     return
                 }
-
+                
                 DispatchQueue.main.async {
                     self.reviews = documents.map { doc -> Review in
                         let data = doc.data()
-
+                        
                         let rating = data["rating"] as? Int ?? 0
                         let comment = data["comment"] as? String ?? "No comment"
                         let userName = data["userName"] as? String ?? "Anonymous"
                         let timestamp = data["timestamp"] as? Timestamp ?? Timestamp()
-
+                        
                         return Review(
                             id: doc.documentID,
                             userID: data["userID"] as? String ?? "Unknown User",
@@ -694,20 +673,16 @@ struct Product_Page: View {
                             timestamp: timestamp
                         )
                     }
-
+                    
                     if let lastDoc = documents.last {
                         self.lastReviewDocument = lastDoc
                     }
-
+                    
                     if documents.count < pageSize {
                         self.allReviewsLoaded = true
                     }
-
-//                    showReviews = true
                     isLoading = false
                 }
-
-//                isLoading = false
             }
     }
     
@@ -722,12 +697,12 @@ struct Product_Page: View {
     private func loadMoreReviews() {
         guard !allReviewsLoaded && !isLoadingMore else { return }
         isLoadingMore = true
-
+        
         guard let lastDoc = lastReviewDocument else {
             isLoadingMore = false
             return
         }
-
+        
         db.collection("products").document(productID).collection("reviews")
             .order(by: "timestamp", descending: true)
             .start(afterDocument: lastDoc)
@@ -739,23 +714,23 @@ struct Product_Page: View {
                     isLoadingMore = false
                     return
                 }
-
+                
                 guard let documents = snapshot?.documents, !documents.isEmpty else {
                     print("No more reviews to load")
                     allReviewsLoaded = true
                     isLoadingMore = false
                     return
                 }
-
+                
                 DispatchQueue.main.async {
                     let newReviews = documents.map { doc -> Review in
                         let data = doc.data()
-
+                        
                         let rating = data["rating"] as? Int ?? 0
                         let comment = data["comment"] as? String ?? "No comment"
                         let userName = data["userName"] as? String ?? "Anonymous"
                         let timestamp = data["timestamp"] as? Timestamp ?? Timestamp()
-
+                        
                         return Review(
                             id: doc.documentID,
                             userID: data["userID"] as? String ?? "Unknown User",
@@ -765,22 +740,22 @@ struct Product_Page: View {
                             timestamp: timestamp
                         )
                     }
-
+                    
                     self.reviews.append(contentsOf: newReviews)
-
+                    
                     if let lastDoc = documents.last {
                         self.lastReviewDocument = lastDoc
                     }
-
+                    
                     if documents.count < pageSize {
                         self.allReviewsLoaded = true
                     }
                 }
-
+                
                 isLoadingMore = false
             }
     }
-
+    
     
     private func addReminder() {
         eventStore.requestAccess(to: .event) { granted, error in
@@ -793,11 +768,11 @@ struct Product_Page: View {
             }
             
             if granted {
-                DispatchQueue.main.async { // Use .async to dispatch to the main thread
+                DispatchQueue.main.async {
                     createEvent()
                 }
             } else {
-                DispatchQueue.main.async { // Use .async here as well
+                DispatchQueue.main.async {
                     showAlert(
                         title: "Permission Denied",
                         message: "Calendar access is required to add a reminder. Please enable it in the Settings app."
@@ -806,34 +781,25 @@ struct Product_Page: View {
             }
         }
     }
-
-
+    
+    
     private func createEvent() {
-            let event = EKEvent(eventStore: self.eventStore)
-            event.title = self.product_name
-            event.notes = self.product_desc
-            event.startDate = self.reminderDate // Use selected date
-            event.endDate = self.reminderDate.addingTimeInterval(3600) // 1-hour duration
-            event.calendar = self.eventStore.defaultCalendarForNewEvents
-
-            do {
-                try self.eventStore.save(event, span: .thisEvent)
-                print("Event added to calendar")
-                showAlert(title: "Reminder Added", message: "A reminder for \(self.product_name) has been added to your calendar.")
-            } catch {
-                print("Error saving event to calendar: \(error.localizedDescription)")
-                showAlert(title: "Error", message: "Failed to add the reminder. Please try again.")
-            }
+        let event = EKEvent(eventStore: self.eventStore)
+        event.title = self.product_name
+        event.notes = self.product_desc
+        event.startDate = self.reminderDate
+        event.endDate = self.reminderDate.addingTimeInterval(3600)
+        event.calendar = self.eventStore.defaultCalendarForNewEvents
+        
+        do {
+            try self.eventStore.save(event, span: .thisEvent)
+            print("Event added to calendar")
+            showAlert(title: "Reminder Added", message: "A reminder for \(self.product_name) has been added to your calendar.")
+        } catch {
+            print("Error saving event to calendar: \(error.localizedDescription)")
+            showAlert(title: "Error", message: "Failed to add the reminder. Please try again.")
         }
-
-//    private func showAlert(title: String, message: String) {
-//            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-//            alert.addAction(UIAlertAction(title: "OK", style: .default))
-//
-//            if let rootViewController = UIApplication.shared.windows.first?.rootViewController {
-//                rootViewController.present(alert, animated: true, completion: nil)
-//            }
-//        }
+    }
     
     private func fetchProductDetails() {
         db.collection("products").document(productID).getDocument { snapshot, error in
@@ -841,23 +807,23 @@ struct Product_Page: View {
                 print("Error fetching product details: \(error)")
                 return
             }
-
+            
             guard let data = snapshot?.data() else {
                 print("No product data found for ID: \(productID)")
                 return
             }
-
+            
             DispatchQueue.main.async {
-                product_name = data["name"] as? String ?? "Unknown Product"
-                seller_name = data["siteName"] as? String ?? "Unknown Seller"
-                seller_id = data["seller_id"] as? String ?? "Unknown seller"
+                product_name = data["name"] as? String ?? ""
+                seller_name = data["siteName"] as? String ?? ""
+                seller_id = data["seller_id"] as? String ?? ""
                 product_likes = data["likes"] as? Int ?? 0
                 product_dislikes = data["dislikes"] as? Int ?? 0
                 product_ratings = Double(data["rating"] as? String ?? "\(data["rating"] as? Double ?? 0.0)") ?? 0.0
                 product_desc = data["description"] as? String ?? "No description available."
                 product_img = data["product_image"] as? String ?? ""
                 product_price = data["price"] as? String ?? ""
-
+                
                 if let sellerID = data["seller_id"] as? String {
                     fetchSellerProfile(sellerID: sellerID)
                 }
@@ -865,7 +831,7 @@ struct Product_Page: View {
             }
         }
     }
-
+    
     
     private func fetchOtherProducts() {
         db.collection("products").limit(to: 10).getDocuments { snapshot, error in
@@ -873,12 +839,12 @@ struct Product_Page: View {
                 print("Error fetching other products: \(error)")
                 return
             }
-
+            
             guard let documents = snapshot?.documents else {
                 print("No other products found")
                 return
             }
-
+            
             DispatchQueue.main.async {
                 self.otherProducts = documents.compactMap { doc in
                     let data = doc.data()
@@ -897,7 +863,7 @@ struct Product_Page: View {
             }
         }
     }
-
+    
     
     // Fetch seller profile
     private func fetchSellerProfile(sellerID: String) {
@@ -1015,10 +981,10 @@ struct Product_Page: View {
     
     private func toggleLike() {
         guard !userID.isEmpty else { return }
-
+        
         let productRef = db.collection("products").document(productID)
         let customerRef = db.collection("customers").document(userID)
-
+        
         if hasLiked {
             productRef.updateData(["likes": FieldValue.increment(Int64(-1))])
             customerRef.updateData(["liked_products": FieldValue.arrayRemove([productID])]) { error in
@@ -1032,12 +998,12 @@ struct Product_Page: View {
         } else {
             var updates: [String: Any] = ["likes": FieldValue.increment(Int64(1))]
             var customerUpdates: [String: Any] = ["liked_products": FieldValue.arrayUnion([productID])]
-
+            
             if hasDisliked {
                 updates["dislikes"] = FieldValue.increment(Int64(-1))
                 customerUpdates["disliked_products"] = FieldValue.arrayRemove([productID])
             }
-
+            
             productRef.updateData(updates)
             customerRef.updateData(customerUpdates) { error in
                 if error == nil {
@@ -1053,7 +1019,7 @@ struct Product_Page: View {
             }
         }
     }
-
+    
     
     // Toggle dislike status
     private func toggleDislike() {
@@ -1139,7 +1105,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     var items: [Any]
     var activities: [UIActivity]? = nil
     var completion: ((Bool) -> Void)? = nil
-
+    
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: items, applicationActivities: activities)
         controller.completionWithItemsHandler = { activity, success, items, error in
@@ -1147,7 +1113,7 @@ struct ShareSheet: UIViewControllerRepresentable {
         }
         return controller
     }
-
+    
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 

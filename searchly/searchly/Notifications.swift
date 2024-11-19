@@ -24,7 +24,7 @@ struct Notifications: View {
     
     var body: some View {
         VStack(spacing: 0) {
-
+            
             // Notification List
             VStack(spacing: 0) {
                 if isLoading {
@@ -101,23 +101,6 @@ struct Notifications: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
             
-            // Uncomment and customize the Bottom Navigation Bar if needed
-            /*
-            Divider()
-            HStack {
-                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-                Spacer()
-                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-                Spacer()
-                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
-            }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 10)
-            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-            .padding(.bottom, 20) // Padding to ensure it doesn't overlap with the home indicator area
-            */
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -184,38 +167,6 @@ struct Notifications: View {
                 }
             }
         }
-        
-        /*
-        // Alternatively, for a one-time fetch instead of real-time updates
-        customerRef.getDocument { snapshot, error in
-            if let error = error {
-                print("Error fetching notifications: \(error.localizedDescription)")
-                self.errorMessage = "Failed to load notifications."
-                self.isLoading = false
-                return
-            }
-            
-            guard let data = snapshot?.data() else {
-                print("No data found for user ID: \(userID)")
-                self.notifications = []
-                self.isLoading = false
-                return
-            }
-            
-            if let notifData = data["notifications"] as? [String] {
-                DispatchQueue.main.async {
-                    self.notifications = notifData
-                    self.isLoading = false
-                }
-            } else {
-                // If notifications are not stored as [String], handle accordingly
-                DispatchQueue.main.async {
-                    self.notifications = []
-                    self.isLoading = false
-                }
-            }
-        }
-        */
     }
     
     // MARK: - Remove Individual Notification
@@ -229,7 +180,6 @@ struct Notifications: View {
                 print("Error removing notification: \(error.localizedDescription)")
             } else {
                 print("Notification removed successfully.")
-                // No need to manually remove from the local array if using real-time listener
             }
         }
     }
@@ -249,21 +199,6 @@ struct Notifications: View {
             }
         }
     }
-    
-    // MARK: - Color Extension
-//    private func Color(hexValue: String) -> Color {
-//        let scanner = Scanner(string: hexValue)
-//        _ = scanner.scanString("#")
-//        
-//        var rgb: UInt64 = 0
-//        scanner.scanHexInt64(&rgb)
-//        
-//        let red = Double((rgb >> 16) & 0xFF) / 255.0
-//        let green = Double((rgb >> 8) & 0xFF) / 255.0
-//        let blue = Double(rgb & 0xFF) / 255.0
-//        
-//        return Color(red: red, green: green, blue: blue)
-//    }
     
     // Preview Provider
     struct Notifications_Previews: PreviewProvider {

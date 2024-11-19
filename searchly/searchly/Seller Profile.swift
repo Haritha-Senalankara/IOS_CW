@@ -21,7 +21,7 @@ struct Seller_Profile: View {
     @State private var phoneNumber: String = "Unavailable"
     @State private var whatsappNumber: String = "Unavailable"
     @State private var seller_profile_img_link: String = "http://res.cloudinary.com/diiyqygjq/image/upload/v1731136795/ihkamxqdatbv8xkubxq.jpg"
-
+    
     private let db = Firestore.firestore()
     let sellerID: String
     
@@ -30,28 +30,10 @@ struct Seller_Profile: View {
     @State private var navigateToNotification = false
     
     @StateObject private var viewModel = ProductViewModel()
-
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Top Navigation Bar
-//            HStack {
-//                
-//                Spacer()
-//                
-//                Image("notification-icon")
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 20, height: 20)
-//                    .padding(.trailing, 15)
-//                
-//                Image("profile-icon")
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 20, height: 20)
-//                    .padding(.trailing, 20)
-//            }
-//            .padding(.top, 50)
-//            .padding(.bottom, 10)
+            
             TopNavBar(
                 searchText: $searchText,
                 onProfileTap: {
@@ -126,7 +108,7 @@ struct Seller_Profile: View {
                         }
                     }
                 }
-
+                
                 .padding(.horizontal, 20)
                 
                 // Seller Description
@@ -137,10 +119,6 @@ struct Seller_Profile: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
                     
-                    //                Text("Email: \(sellerEmail)")
-                    //                    .font(.custom("Heebo-Bold", size: 14))
-                    //                    .foregroundColor(Color(hexValue: "#102A36"))
-                    //                    .padding(.horizontal, 20)
                 }
                 
                 // Map
@@ -150,7 +128,7 @@ struct Seller_Profile: View {
                             .frame(height: 200)
                             .padding(.horizontal, 20)
                             .padding(.top, 10)
-
+                        
                         Button(action: {
                             openMaps(for: location)
                         }) {
@@ -172,7 +150,7 @@ struct Seller_Profile: View {
                         .foregroundColor(.gray)
                         .padding(.top, 20)
                 }
-
+                
                 
                 // Product Listings
                 ScrollView {
@@ -197,21 +175,6 @@ struct Seller_Profile: View {
             
             Spacer()
             
-            // Bottom Navigation Bar
-//            Divider()
-//            HStack {
-//                BottomNavItem(iconName: "home-icon", title: "Home", isActive: false)
-//                Spacer()
-//                BottomNavItem(iconName: "heart-icon", title: "Favorites", isActive: false)
-//                Spacer()
-//                BottomNavItem(iconName: "settings-icon", title: "Settings", isActive: false)
-//            }
-//            .padding(.horizontal, 40)
-//            .padding(.vertical, 10)
-//            .background(Color(hexValue: "#102A36")) // Dark color as per style guide
-//            .foregroundColor(.white)
-//            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 0)
-//            .padding(.bottom, 20)
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -219,7 +182,7 @@ struct Seller_Profile: View {
             fetchSellerData()
             viewModel.fetchProducts(sellerID: sellerID)
         }
-//        .navigationBarBackButtonHidden(true)
+        //        .navigationBarBackButtonHidden(true)
         
         // Sheets for Profile and Notifications
         .sheet(isPresented: $navigateToProfile) {
@@ -234,7 +197,7 @@ struct Seller_Profile: View {
         let url = URL(string: "http://maps.apple.com/?daddr=\(location.latitude),\(location.longitude)")!
         UIApplication.shared.open(url)
     }
-
+    
     // Fetch seller data from Firestore and parse as JSON
     private func fetchSellerData() {
         db.collection("sellers").document(sellerID).getDocument { snapshot, error in
@@ -285,7 +248,7 @@ struct Seller_Profile: View {
 
 struct MapView: View {
     var coordinate: CLLocationCoordinate2D
-
+    
     var body: some View {
         Map(
             coordinateRegion: .constant(MKCoordinateRegion(

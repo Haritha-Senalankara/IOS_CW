@@ -9,14 +9,6 @@ import Foundation
 import SwiftUI
 import FirebaseFirestore
 import EventKit
-//// Review Model
-//struct Review: Identifiable {
-//    var id: String
-//    var userID: String
-//    var rating: Int
-//    var comment: String
-//}
-
 
 struct Review: Identifiable {
     var id: String

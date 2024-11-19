@@ -140,7 +140,7 @@ struct Login_or_Signup: View {
                 ) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
             .background(
                 NavigationLink(
@@ -149,12 +149,12 @@ struct Login_or_Signup: View {
                 ) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
             .onAppear {
                 if let userIDData = KeychainHelper.shared.read(key: "authenticatedUser"),
                    let userID = String(data: userIDData, encoding: .utf8) {
-                    authenticateWithFaceID()
+                    //                    authenticateWihFaceID()
                 }
             }
         }
@@ -170,21 +170,21 @@ struct Login_or_Signup: View {
             self.showAlert = true
             return
         }
-
+        
         GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
             if let error = error {
                 self.errorMessage = "Google Sign-In failed: \(error.localizedDescription)"
                 self.showAlert = true
                 return
             }
-
+            
             guard let user = result?.user,
                   let idToken = user.idToken?.tokenString else {
                 self.errorMessage = "Unable to fetch Google ID token."
                 self.showAlert = true
                 return
             }
-
+            
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
             Auth.auth().signIn(with: credential) { authResult, error in
                 if let error = error {
@@ -192,14 +192,14 @@ struct Login_or_Signup: View {
                     self.showAlert = true
                     return
                 }
-
+                
                 if let authUser = authResult?.user {
                     // Store userID securely in Keychain
                     storeUserID(authUser.uid)
-
+                    
                     // Optionally store in UserDefaults for quick access
                     UserDefaults.standard.set(authUser.uid, forKey: "userID")
-
+                    
                     checkUserExistsAndSave(
                         userID: authUser.uid,
                         email: authUser.email ?? "Unknown Email",
@@ -207,13 +207,13 @@ struct Login_or_Signup: View {
                         lastName: user.profile?.familyName ?? "Unknown",
                         profileImage: user.profile?.imageURL(withDimension: 200)?.absoluteString ?? ""
                     )
-
+                    
                     navigateToHome = true
                 }
             }
         }
     }
-
+    
     // MARK: - User Existence Check and Save
     
     func checkUserExistsAndSave(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
@@ -222,7 +222,7 @@ struct Login_or_Signup: View {
                 print("Error checking user existence: \(error.localizedDescription)")
                 return
             }
-
+            
             if let document = document, document.exists {
                 print("User already exists in Firestore.")
             } else {
@@ -230,7 +230,7 @@ struct Login_or_Signup: View {
             }
         }
     }
-
+    
     func saveUserToFirestore(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
         let userData: [String: Any] = [
             "email_address": email,
@@ -238,7 +238,7 @@ struct Login_or_Signup: View {
             "profile_image": profileImage,
             "created_at": Timestamp()
         ]
-
+        
         db.collection("customers").document(userID).setData(userData) { error in
             if let error = error {
                 print("Error saving user data: \(error.localizedDescription)")
@@ -260,30 +260,34 @@ struct Login_or_Signup: View {
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
                 DispatchQueue.main.async {
                     if success {
-                        if let userIDData = KeychainHelper.shared.read(key: "authenticatedUser"),
-                           let userID = String(data: userIDData, encoding: .utf8) {
-                            print("Authenticated User ID: \(userID)")
-                            UserDefaults.standard.set(userID, forKey: "userID")
+                        // Retrieve user ID from UserDefaults and proceed
+                        if let userID = UserDefaults.standard.string(forKey: "userID") {
+                            print("Authenticated with Face ID. User ID retrieved: \(userID)")
                             self.navigateToHome = true
                         } else {
-                            self.errorMessage = "No authenticated user found."
+                            self.errorMessage = "Face ID authentication succeeded, but user ID was not found."
                             self.showAlert = true
                         }
                     } else {
-                        self.errorMessage = "Face ID Authentication failed."
+                        // Handle Face ID authentication failure
+                        print("Face ID failed: \(authenticationError?.localizedDescription ?? "Unknown error")")
+                        self.errorMessage = "Face ID authentication failed. Please try again."
                         self.showAlert = true
                     }
                 }
             }
         } else {
-            self.errorMessage = "Face ID not available on this device."
-            self.showAlert = true
+            // Handle case where Face ID is unavailable
+            DispatchQueue.main.async {
+                self.errorMessage = "Face ID is not available on this device."
+                self.showAlert = true
+            }
         }
     }
-
+    
+    
     
     // MARK: - Helper Function to Store User ID
-    
     func storeUserID(_ userID: String) {
         let userIDData = Data(userID.utf8)
         KeychainHelper.shared.save(key: "authenticatedUser", data: userIDData)

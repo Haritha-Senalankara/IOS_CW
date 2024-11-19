@@ -16,24 +16,24 @@ struct Home: View {
     
     @StateObject private var viewModel = ProductViewModel()
     @State private var showPriceFilter = false
-    @State private var selectedMinPrice: Double = 0 // Default min price
-    @State private var selectedMaxPrice: Double = 1000000 // Default max price
+    @State private var selectedMinPrice: Double = 0
+    @State private var selectedMaxPrice: Double = 1000000
     
-    @State private var showLocationFilter = false // State to control location filter visibility
-    @State private var selectedLocation: CLLocationCoordinate2D? // Selected location
-    @State private var selectedRadius: Double = 1000 // Default radius (1 km)
+    @State private var showLocationFilter = false
+    @State private var selectedLocation: CLLocationCoordinate2D?
+    @State private var selectedRadius: Double = 1000
     
     @State private var showRatingFilter = false
-    @State private var selectedRating: Double = 0.0 // Default rating
+    @State private var selectedRating: Double = 0.0
     
     @State private var showLikesFilter = false
-    @State private var selectedLikes: Int = 0 // Default likes
+    @State private var selectedLikes: Int = 0 
     
     @State private var showAppFilter = false
-    @State private var selectedAppFilters: [String] = [] // Selected app filter IDs
+    @State private var selectedAppFilters: [String] = []
     
     @State private var showContactFilter = false
-    @State private var selectedContactMethodFilters: [String] = [] // Selected contact method filter IDs
+    @State private var selectedContactMethodFilters: [String] = []
     
     
     // Navigation States
@@ -41,12 +41,11 @@ struct Home: View {
     @State private var selectedTab: BottomNavBar.NavTab = .home
     @State private var navigateToProfile = false
     @State private var navigateToNotification = false
-
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Top Navigation Bar
-                // Inside your Home view's body, where you initialize TopNavBar
+                
                 TopNavBar(
                     searchText: $searchText,
                     onProfileTap: {
@@ -64,7 +63,6 @@ struct Home: View {
                 
                 // Conditionally Display Content Based on Selected Tab
                 if selectedTab == .home {
-                    // Filter Buttons
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         FilterButton(iconName: "location-icon", title: "Location") {
                             showLocationFilter = true
@@ -101,7 +99,7 @@ struct Home: View {
                             }
                             else{
                                 ForEach(viewModel.products) { product in
-                                    NavigationLink(value: product.id) { // Use 'value' instead of 'destination'
+                                    NavigationLink(value: product.id) {
                                         ProductCard(
                                             imageName: product.imageName,
                                             name: product.name,
@@ -111,7 +109,7 @@ struct Home: View {
                                             rating: String(format: "%.1f", product.rating)
                                         )
                                     }
-                                    .buttonStyle(PlainButtonStyle()) // Optional: Remove default button styling
+                                    .buttonStyle(PlainButtonStyle())
                                 }
                             }
                             
@@ -136,11 +134,10 @@ struct Home: View {
             }
             .background(Color.white)
             .edgesIgnoringSafeArea(.all)
-            // Navigation Destinations for Product Pages
             .navigationDestination(for: String.self) { productID in
                 Product_Page(productID: productID)
             }
-            // Sheets for Profile and Notifications
+            
             .sheet(isPresented: $navigateToProfile) {
                 Customer_Profile()
             }
@@ -206,26 +203,31 @@ struct Home: View {
                 viewModel.fetchAppFilters {
                     viewModel.fetchContactMethodFilters {
                         viewModel.fetchProducts()
-                            
+                        
                     }
                 }
                 
-                // Timer to set isLoading to false after 2 seconds
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                     isLoading = false
                 }
             }
             
-            // After your existing modifiers in the Home view, add:
             .onChange(of: searchText) { newValue in
                 viewModel.searchText = newValue
                 viewModel.applyFilters()
             }
         }
-        .navigationBarHidden(true) // Hide the default navigation bar
+        .navigationBarHidden(true)
+        .onAppear{
+            setCustomerLoggedIn()
+        }
     }
     
-    
+    private func setCustomerLoggedIn(){
+        let defaults = UserDefaults.standard
+        defaults.set(false, forKey: "isLoggedOut")
+        defaults.synchronize()
+    }
 }
 
 // MARK: - Preview

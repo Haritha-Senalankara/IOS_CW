@@ -13,7 +13,7 @@ struct PriceFilterView: View {
     @Binding var selectedMaxPrice: Double
     @Binding var isPresented: Bool
     var onApply: () -> Void // Closure to execute when 'Apply' is tapped
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Minimum Price: Rs.\(Int(selectedMinPrice))")
