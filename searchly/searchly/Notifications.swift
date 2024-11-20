@@ -2,8 +2,6 @@
 //  Notifications.swift
 //  searchly
 //
-//  Created by cobsccompy4231p-007 on 2024-10-27.
-//
 
 import SwiftUI
 import FirebaseFirestore
@@ -17,14 +15,13 @@ struct Notifications: View {
     @State private var userID: String = ""
     
     // Notifications data
-    @State private var notifications: [String] = []
+    @State private var notifications: [[String: Any]] = []
     @State private var isLoading: Bool = true
     @State private var errorMessage: String?
     @State private var notificationEnabled: Bool = true
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            
             // Notification List
             VStack(spacing: 0) {
                 if isLoading {
@@ -36,7 +33,6 @@ struct Notifications: View {
                         .multilineTextAlignment(.center)
                         .padding()
                 } else if !notificationEnabled {
-                    // Display message when notifications are disabled
                     Text("Notifications are disabled.")
                         .foregroundColor(.gray)
                         .font(.custom("Heebo-Regular", size: 16))
@@ -47,34 +43,40 @@ struct Notifications: View {
                         .font(.custom("Heebo-Regular", size: 16))
                         .padding()
                 } else {
-                    ForEach(notifications.indices, id: \.self) { index in
+                    List(notifications.indices, id: \.self) { index in
+                        let notification = notifications[index]
                         HStack {
-                            Text(notifications[index])
-                                .font(.custom("Heebo-Regular", size: 14))
-                                .foregroundColor(Color(hexValue: "#102A36"))
-                                .lineLimit(nil)
+                            Image(systemName: "bell.fill")
+                                .foregroundColor(Color(hexValue: "#F2A213"))
+                                .padding(.trailing, 10)
+                            
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(notification["title"] as? String ?? "New Notification")
+                                    .font(.custom("Heebo-Bold", size: 16))
+                                    .foregroundColor(Color(hexValue: "#102A36"))
+                                
+                                Text(notification["body"] as? String ?? "No details available")
+                                    .font(.custom("Heebo-Regular", size: 14))
+                                    .foregroundColor(.gray)
+                                    .lineLimit(nil)
+                            }
                             
                             Spacer()
                             
                             Button(action: {
                                 // Remove individual notification
-                                removeNotification(notifications[index])
+                                removeNotification(at: index)
                             }) {
-                                Image(systemName: "trash") // Use your remove icon here
+                                Image(systemName: "trash")
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 20, height: 20)
-                                    .foregroundColor(.red) // Optional: Change color to indicate removal
+                                    .foregroundColor(.red)
                             }
-                            .padding(.leading, 10)
                         }
-                        .padding(.vertical, 15)
-                        .padding(.horizontal, 20)
-                        
-                        Divider()
-                            .background(Color.gray.opacity(0.3))
-                            .padding(.leading, 20)
+                        .padding(.vertical, 10)
                     }
+                    .listStyle(InsetGroupedListStyle())
                 }
             }
             .background(Color.white)
@@ -87,7 +89,6 @@ struct Notifications: View {
             
             // Clear All Button
             Button(action: {
-                // Clear all notifications action
                 clearAllNotifications()
             }) {
                 Text("Clear All")
@@ -100,7 +101,6 @@ struct Notifications: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
-            
         }
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
@@ -111,9 +111,9 @@ struct Notifications: View {
     
     // MARK: - Fetch User ID from UserDefaults
     private func fetchUserID() {
-        if let uid = UserDefaults.standard.string(forKey: "userID") {
+        if let uid = UserDefaults.standard.string(forKey: "userID"), !uid.isEmpty {
             self.userID = uid
-            fetchNotifications()
+            loadNotifications()
         } else {
             self.errorMessage = "User not logged in."
             self.isLoading = false
@@ -121,56 +121,45 @@ struct Notifications: View {
         }
     }
     
-    private func fetchNotifications() {
+    // MARK: - Load Notifications from Firestore
+    private func loadNotifications() {
+        guard !userID.isEmpty else { return }
         let customerRef = db.collection("customers").document(userID)
         
-        // Real-time Listener
-        customerRef.addSnapshotListener { snapshot, error in
+        customerRef.getDocument { document, error in
             if let error = error {
-                print("Error fetching notifications: \(error.localizedDescription)")
                 self.errorMessage = "Failed to load notifications."
-                self.isLoading = false
+                print("Error fetching notifications: \(error.localizedDescription)")
                 return
             }
             
-            guard let data = snapshot?.data() else {
-                print("No data found for user ID: \(userID)")
+            guard let data = document?.data() else {
                 self.notifications = []
-                self.notificationEnabled = false // Assume notifications are disabled if no data
-                self.isLoading = false
                 return
             }
             
-            // Fetch notification_status
             if let notifStatus = data["notification_status"] as? Bool {
                 DispatchQueue.main.async {
                     self.notificationEnabled = notifStatus
                 }
-            } else {
-                // Default to true if the field is missing
-                DispatchQueue.main.async {
-                    self.notificationEnabled = true
-                }
             }
             
-            // Fetch notifications only if notifications are enabled
-            if let notifData = data["notifications"] as? [String], notificationEnabled {
+            if let notifArray = data["notifications"] as? [[String: Any]] {
                 DispatchQueue.main.async {
-                    self.notifications = notifData
-                    self.isLoading = false
-                }
-            } else {
-                // If notifications are disabled or no notifications, clear the list
-                DispatchQueue.main.async {
-                    self.notifications = []
+                    self.notifications = notifArray
                     self.isLoading = false
                 }
             }
         }
     }
-    
+
     // MARK: - Remove Individual Notification
-    private func removeNotification(_ notification: String) {
+    private func removeNotification(at index: Int) {
+        let notification = notifications[index]
+        notifications.remove(at: index) // Update UI immediately
+        
+        // Update Firestore to remove the notification
+        guard !userID.isEmpty else { return }
         let customerRef = db.collection("customers").document(userID)
         
         customerRef.updateData([
@@ -186,6 +175,7 @@ struct Notifications: View {
     
     // MARK: - Clear All Notifications
     private func clearAllNotifications() {
+        guard !userID.isEmpty else { return }
         let customerRef = db.collection("customers").document(userID)
         
         customerRef.updateData([
@@ -195,12 +185,14 @@ struct Notifications: View {
                 print("Error clearing all notifications: \(error.localizedDescription)")
             } else {
                 print("All notifications cleared successfully.")
-                // No need to manually clear the local array if using real-time listener
+                DispatchQueue.main.async {
+                    self.notifications.removeAll()
+                }
             }
         }
     }
-    
-    // Preview Provider
+
+    // MARK: - Preview Provider
     struct Notifications_Previews: PreviewProvider {
         static var previews: some View {
             Notifications()

@@ -22,133 +22,138 @@ struct Customer_Profile: View {
     private let db = Firestore.firestore()
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Profile Picture and Name Section
-            VStack(spacing: 15) {
-                if isLoading {
-                    ProgressView()
-                        .frame(width: 100, height: 100)
-                } else {
-                    AsyncImage(url: URL(string: profileImageURL)) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
+        NavigationView{
+            VStack(spacing: 0) {
+                // Profile Picture and Name Section
+                VStack(spacing: 15) {
+                    if isLoading {
+                        ProgressView()
                             .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
-                    } placeholder: {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(Color(hexValue: "#F2A213"))
-                            .background(Color(hexValue: "#F9F0DC"))
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
-                    }
-                }
-                
-                HStack(spacing: 8) {
-                    Text(name)
-                        .font(.custom("Heebo-Bold", size: 18))
-                        .foregroundColor(Color(hexValue: "#102A36"))
-                }
-            }
-            .padding(.bottom, 40)
-            .padding(.top, 50)
-            
-            // Profile Editing Section
-            VStack(spacing: 20) {
-                HStack {
-                    Text("First Name")
-                        .font(.headline)
-                        .frame(width: 100, alignment: .leading)
-                    TextField("Enter first name", text: $firstName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                
-                HStack {
-                    Text("Last Name")
-                        .font(.headline)
-                        .frame(width: 100, alignment: .leading)
-                    TextField("Enter last name", text: $lastName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                
-                HStack {
-                    Text("Phone")
-                        .font(.headline)
-                        .frame(width: 100, alignment: .leading)
-                    TextField("Enter phone number", text: $phoneNumber)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.phonePad)
-                }
-                
-                HStack {
-                    Text("Gender")
-                        .font(.headline)
-                        .frame(width: 100, alignment: .leading)
-                    Picker("Gender", selection: $gender) {
-                        Text("Male").tag("Male")
-                        Text("Female").tag("Female")
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                }
-                
-                Button(action: generateAndSendOTP) {
-                    Text("Save")
-                        .font(.custom("Heebo-Bold", size: 16))
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(hexValue: "#F2A213"))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .padding(.top, 20)
-            }
-            .padding(.horizontal, 20)
-            
-            Spacer()
-            Divider()
-            
-            // Recently Viewed Products Section
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Recently Viewed Products")
-                    .font(.custom("Heebo-Bold", size: 16))
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyHGrid(rows: [GridItem(.fixed(180))], spacing: 20) {
-                        ForEach(recentlyViewedProducts, id: \.id) { product in
-                            NavigationLink(destination: Product_Page(productID: product.id)) {
-                                ProductCard(
-                                    imageName: product.imageName,
-                                    name: product.name,
-                                    siteName: product.siteName,
-                                    price: "\(Int(product.price))",
-                                    likes: "\(product.likes)",
-                                    rating: String(format: "%.1f", product.rating)
-                                )
-                            }
+                    } else {
+                        AsyncImage(url: URL(string: profileImageURL)) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
+                        } placeholder: {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(Color(hexValue: "#F2A213"))
+                                .background(Color(hexValue: "#F9F0DC"))
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color(hexValue: "#F2A213"), lineWidth: 2))
                         }
                     }
-                    .padding(.horizontal, 20)
+                    
+                    HStack(spacing: 8) {
+                        Text(name)
+                            .font(.custom("Heebo-Bold", size: 18))
+                            .foregroundColor(Color(hexValue: "#102A36"))
+                    }
+                }
+                .padding(.bottom, 40)
+                .padding(.top, 40)
+                
+                // Profile Editing Section
+                VStack(spacing: 20) {
+                    HStack {
+                        Text("First Name")
+                            .font(.headline)
+                            .frame(width: 100, alignment: .leading)
+                        TextField("Enter first name", text: $firstName)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
+                    
+                    HStack {
+                        Text("Last Name")
+                            .font(.headline)
+                            .frame(width: 100, alignment: .leading)
+                        TextField("Enter last name", text: $lastName)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
+                    
+                    HStack {
+                        Text("Phone")
+                            .font(.headline)
+                            .frame(width: 100, alignment: .leading)
+                        TextField("Enter phone number", text: $phoneNumber)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.phonePad)
+                    }
+                    
+                    HStack {
+                        Text("Gender")
+                            .font(.headline)
+                            .frame(width: 100, alignment: .leading)
+                        Picker("Gender", selection: $gender) {
+                            Text("Male").tag("Male")
+                            Text("Female").tag("Female")
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    
+                    Button(action: generateAndSendOTP) {
+                        Text("Save")
+                            .font(.custom("Heebo-Bold", size: 16))
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color(hexValue: "#F2A213"))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                Divider()
+                
+                // Recently Viewed Products Section
+                VStack(alignment: .leading, spacing: 10) {
+                    // Title
+                    Text("Recently Viewed Products")
+                        .font(.custom("Heebo-Bold", size: 16))
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    
+                    // Horizontal ScrollView
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        HStack(spacing: 20) {
+                            ForEach(recentlyViewedProducts, id: \.id) { product in
+                                NavigationLink(destination: Product_Page(productID: product.id)) {
+                                    ProductCard(
+                                        imageName: product.imageName,
+                                        name: product.name,
+                                        siteName: product.siteName,
+                                        price: "\(Int(product.price))",
+                                        likes: "\(product.likes)",
+                                        rating: String(format: "%.1f", product.rating)
+                                    )
+                                    .frame(width: 180) // Set a fixed width for each product card
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20) // Add padding to the left and right
+                    }
+                    .frame(height: 300) // Restrict the scroll view height
                 }
             }
-        }
-        .background(Color.white)
-        .edgesIgnoringSafeArea(.all)
-        .onAppear {
-            fetchCustomerProfile()
-            fetchRecentlyViewedProducts()
-        }
-        .sheet(isPresented: $showOTPPopup) {
-            OTPVerificationPopup(
-                enteredOTP: $enteredOTP,
-                generatedOTP: generatedOTP,
-                onVerify: verifyOTP
-            )
+            .background(Color.white)
+            .edgesIgnoringSafeArea(.all)
+            .onAppear {
+                fetchCustomerProfile()
+                fetchRecentlyViewedProducts()
+            }
+            .sheet(isPresented: $showOTPPopup) {
+                OTPVerificationPopup(
+                    enteredOTP: $enteredOTP,
+                    generatedOTP: generatedOTP,
+                    onVerify: verifyOTP
+                )
+            }
         }
     }
     

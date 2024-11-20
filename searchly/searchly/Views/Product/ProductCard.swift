@@ -68,7 +68,10 @@ struct ProductCard: View {
             Text(name)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(.black)
-                .lineLimit(2)
+                .lineLimit(3) // Limit to 3 lines
+                .truncationMode(.tail) // Add ellipsis if text exceeds 3 lines
+                .frame(maxWidth: 169, alignment: .leading) // Restrict width to 169 and align to leading
+
             
             Divider()
             
@@ -114,5 +117,6 @@ struct ProductCard: View {
         .background(Color.white)
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .frame(width: 169)
     }
 }

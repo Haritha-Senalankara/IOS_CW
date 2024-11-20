@@ -48,6 +48,7 @@ struct Settings: View {
     @State private var isPrivacyPolicyVisible: Bool = false
     @State private var isFetchingPolicy: Bool = false
     @State private var policyErrorMessage: String? = nil
+    @State private var pushNotificationsEnabled: Bool = true
     
     var body: some View {
         VStack(spacing: 0) {
@@ -73,6 +74,20 @@ struct Settings: View {
                     }
                     
                     Divider().background(Color.gray.opacity(0.3)).padding(.leading, 20)
+                    
+                    // Push Notifications Toggle
+                    Toggle(isOn: $pushNotificationsEnabled) {
+                        settingsRowIconAndText(icon: "megaphone", text: "Enable Push Notifications")
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: Color(hexValue: "#F2A213")))
+                    .padding(.vertical, 15)
+                    .padding(.horizontal, 20)
+                    .onChange(of: pushNotificationsEnabled) { value in
+                        updatePushNotificationStatus(to: value)
+                    }
+
+                    Divider().background(Color.gray.opacity(0.3)).padding(.leading, 20)
+
                     
                     // Face ID Toggle
                     Toggle(isOn: $isFaceIDEnabled) {
@@ -150,6 +165,7 @@ struct Settings: View {
         )
         .onAppear {
             fetchFaceIDStatus() // Only fetches the toggle state without triggering Face ID verification
+            loadPushNotificationStatus()
         }
         
         .sheet(isPresented: $isPrivacyPolicyVisible) {
@@ -160,7 +176,43 @@ struct Settings: View {
             )
         }
     }
-    
+    private func updatePushNotificationStatus(to status: Bool) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated.")
+            return
+        }
+        let db = Firestore.firestore()
+        db.collection("customers").document(uid).updateData(["push_notifications": status]) { error in
+            if let error = error {
+                print("Error updating push notification status: \(error.localizedDescription)")
+            } else {
+                print("Push notifications status updated: \(status)")
+            }
+        }
+    }
+
+    private func loadPushNotificationStatus() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated.")
+            return
+        }
+        let db = Firestore.firestore()
+        db.collection("customers").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error fetching push notification status: \(error.localizedDescription)")
+                return
+            }
+            if let data = document?.data(), let pushStatus = data["push_notifications"] as? Bool {
+                DispatchQueue.main.async {
+                    self.pushNotificationsEnabled = pushStatus
+                }
+                print("Fetched push notification status: \(pushStatus)")
+            } else {
+                print("Push notification status not found in Firestore.")
+            }
+        }
+    }
+
     private func fetchFaceIDStatus() {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not authenticated.")

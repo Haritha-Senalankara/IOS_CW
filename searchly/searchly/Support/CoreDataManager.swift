@@ -34,36 +34,44 @@ class CoreDataManager {
         dislikes: Int,
         rating: Double,
         imageName: String,
-        imageData: Data?, // Add this parameter
+        imageData: Data?,
         siteName: String,
-        categories: [String],
         locationLatitude: Double?,
-        locationLongitude: Double?,
-        sellerApps: [AppFilter],
-        sellerContacts: [ContactMethodFilter]
+        locationLongitude: Double?
     ) {
-        let product = Product(context: self.context)
-        product.id = id
-        product.name = name
-        product.price = price
-        product.likes = Int32(likes)
-        product.dislikes = Int32(dislikes)
-        product.rating = rating
-        product.imageName = imageName
-        product.imageData = imageData
-        product.siteName = siteName
-        product.categories = categories as NSArray
-        product.locationLatitude = locationLatitude ?? 0.0
-        product.locationLongitude = locationLongitude ?? 0.0
-        product.sellerApps = sellerApps as NSArray
-        product.sellerContacts = sellerContacts as NSArray
+        let fetchRequest: NSFetchRequest<Product> = Product.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
         
         do {
-            try self.context.save()
+            let results = try context.fetch(fetchRequest)
+            let product: Product
+            
+            if let existingProduct = results.first {
+                product = existingProduct
+            } else {
+                product = Product(context: self.context)
+                product.id = id
+            }
+            
+            // Update only savable properties
+            product.name = name
+            product.price = price
+            product.likes = Int32(likes)
+            product.dislikes = Int32(dislikes)
+            product.rating = rating
+            product.imageName = imageName
+            product.imageData = imageData
+            product.siteName = siteName
+            product.locationLatitude = locationLatitude ?? 0.0
+            product.locationLongitude = locationLongitude ?? 0.0
+            
+            try context.save()
+            print("Product saved/updated successfully.")
         } catch {
             print("Failed to save product: \(error)")
         }
     }
+
     
     func saveContext() {
         if context.hasChanges {

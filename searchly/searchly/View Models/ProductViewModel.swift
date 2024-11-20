@@ -164,6 +164,7 @@ class ProductViewModel: ObservableObject {
                                     sellerApps: sellerApps,
                                     sellerContacts: sellerContacts
                                 )
+                                print("Pro Name : " + product.name)
                                 
                                 // Save to Core Data
                                 CoreDataManager.shared.saveProduct(
@@ -176,13 +177,11 @@ class ProductViewModel: ObservableObject {
                                     imageName: product.imageName,
                                     imageData: product.imageData, // Include image data
                                     siteName: product.siteName,
-                                    categories: product.categories,
                                     locationLatitude: product.location?.latitude,
-                                    locationLongitude: product.location?.longitude,
-                                    sellerApps: product.sellerApps,
-                                    sellerContacts: product.sellerContacts
+                                    locationLongitude: product.location?.longitude
                                 )
-                                
+
+                                print("Saving ..... !")
                                 fetchedProducts.append(product)
                             } else {
                                 print("Error downloading image: \(error?.localizedDescription ?? "Unknown error")")
@@ -203,6 +202,7 @@ class ProductViewModel: ObservableObject {
                                     sellerContacts: sellerContacts
                                 )
                                 
+                                // Save to Core Data
                                 CoreDataManager.shared.saveProduct(
                                     id: product.id,
                                     name: product.name,
@@ -211,15 +211,12 @@ class ProductViewModel: ObservableObject {
                                     dislikes: product.dislikes,
                                     rating: product.rating,
                                     imageName: product.imageName,
-                                    imageData: nil, // No image data
+                                    imageData: product.imageData, // Include image data
                                     siteName: product.siteName,
-                                    categories: product.categories,
                                     locationLatitude: product.location?.latitude,
-                                    locationLongitude: product.location?.longitude,
-                                    sellerApps: product.sellerApps,
-                                    sellerContacts: product.sellerContacts
+                                    locationLongitude: product.location?.longitude
                                 )
-                                
+                                print("Saving .... ")
                                 fetchedProducts.append(product)
                             }
                         }.resume()
@@ -251,21 +248,20 @@ class ProductViewModel: ObservableObject {
                     likes: Int(coreDataProduct.likes),
                     dislikes: Int(coreDataProduct.dislikes),
                     rating: coreDataProduct.rating,
-                    categories: coreDataProduct.categories as? [String] ?? [],
+                    categories: [], // Empty array for Core Data
                     imageName: coreDataProduct.imageName ?? "",
                     imageData: coreDataProduct.imageData, // Include image data
                     location: CLLocationCoordinate2D(
                         latitude: coreDataProduct.locationLatitude,
                         longitude: coreDataProduct.locationLongitude
                     ),
-                    sellerApps: coreDataProduct.sellerApps as? [AppFilter] ?? [],
-                    sellerContacts: coreDataProduct.sellerContacts as? [ContactMethodFilter] ?? []
+                    sellerApps: [], // Empty array for Core Data
+                    sellerContacts: [] // Empty array for Core Data
                 )
             }
             
             DispatchQueue.main.async {
                 self.allProducts = fetchedProducts
-                print(self.allProducts)
                 self.applyFilters()
             }
         } catch {
