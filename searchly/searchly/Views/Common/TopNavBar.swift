@@ -73,7 +73,6 @@ struct TopNavBar_Previews: PreviewProvider {
     
     static var previews: some View {
         Group {
-            // Preview with showSearch = true
             TopNavBar(
                 searchText: $searchText,
                 onProfileTap: { print("Profile tapped") },
@@ -83,7 +82,6 @@ struct TopNavBar_Previews: PreviewProvider {
             )
             .previewDisplayName("With Search")
             
-            // Preview with showSearch = false
             TopNavBar(
                 searchText: $searchText,
                 onProfileTap: { print("Profile tapped") },

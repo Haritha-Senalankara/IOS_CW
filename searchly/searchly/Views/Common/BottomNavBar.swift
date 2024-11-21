@@ -63,7 +63,7 @@ struct NavItem: View {
                 Text(title)
                     .font(.caption)
             }
-            .foregroundColor(isSelected ? Color.yellow : Color.white) // Change color as needed
+            .foregroundColor(isSelected ? Color.yellow : Color.white)
         }
     }
 }

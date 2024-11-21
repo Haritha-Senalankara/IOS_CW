@@ -3,24 +3,23 @@ import MapKit
 import Combine
 import CoreLocation
 
-// MARK: - LocationSearchCompleter
 class LocationSearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
-    @Published var suggestions: [MKLocalSearchCompletion] = [] // Holds search suggestions
+    @Published var suggestions: [MKLocalSearchCompletion] = []
     private let completer = MKLocalSearchCompleter()
     
     override init() {
         super.init()
-        completer.resultTypes = .address // Specify result types
+        completer.resultTypes = .address
         completer.delegate = self
     }
     
     func updateSearch(query: String) {
-        completer.queryFragment = query // Updates the query fragment
+        completer.queryFragment = query
     }
     
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         DispatchQueue.main.async {
-            self.suggestions = completer.results // Populate suggestions
+            self.suggestions = completer.results
         }
     }
     
@@ -29,7 +28,7 @@ class LocationSearchCompleter: NSObject, ObservableObject, MKLocalSearchComplete
     }
 }
 
-// MARK: - LocationFilterView
+
 struct LocationFilterView: View {
     @Binding var selectedLocation: CLLocationCoordinate2D?
     @Binding var selectedRadius: Double
@@ -48,7 +47,6 @@ struct LocationFilterView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 20) {
-                // Search Field
                 HStack {
                     TextField("Search for a location", text: $searchQuery)
                         .padding(10)
@@ -75,7 +73,6 @@ struct LocationFilterView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // Current Location Button
                 Button(action: {
                     locationManager.requestLocation { location, address in
                         if let location = location {
@@ -100,7 +97,6 @@ struct LocationFilterView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // Current Location Address
                 VStack(spacing: 10) {
                     Text("Your Current Location:")
                         .font(.headline)
@@ -126,7 +122,6 @@ struct LocationFilterView: View {
                         .padding(.horizontal, 20)
                 }
                 
-                // Apply Button
                 Button(action: {
                     isPresented = false
                     selectedLocation = centerCoordinate
@@ -209,7 +204,6 @@ struct LocationFilterView: View {
     }
 }
 
-// MARK: - LocationManager
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var currentLocation: CLLocationCoordinate2D?
     private let locationManager = CLLocationManager()

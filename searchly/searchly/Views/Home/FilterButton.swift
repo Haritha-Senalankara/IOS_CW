@@ -8,7 +8,6 @@
 import SwiftUI
 import Foundation
 
-// MARK: - FilterButton
 struct FilterButton: View {
     var iconName: String
     var title: String

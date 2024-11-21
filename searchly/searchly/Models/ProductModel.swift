@@ -8,7 +8,6 @@
 import Foundation
 import MapKit
 
-// MARK: - Product Model
 struct Products: Identifiable {
     var id: String
     var name: String
@@ -18,9 +17,9 @@ struct Products: Identifiable {
     var dislikes: Int
     var rating: Double
     var categories: [String]
-    var imageName: String // Includes fallback for missing images
-    var imageData: Data? // Add this property
+    var imageName: String
+    var imageData: Data?
     var location: CLLocationCoordinate2D?
-    var sellerApps: [AppFilter] = [] // Holds seller's apps
-    var sellerContacts: [ContactMethodFilter] = [] // Holds seller's contact methods
+    var sellerApps: [AppFilter] = []
+    var sellerContacts: [ContactMethodFilter] = []
 }

@@ -13,7 +13,7 @@ struct AppFilterView: View {
     @Binding var selectedAppFilters: [String]
     @Binding var isPresented: Bool
     var allAppFilters: [AppFilter]
-    var onApply: () -> Void // Closure to execute when 'Apply' is tapped
+    var onApply: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {

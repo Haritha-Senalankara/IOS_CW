@@ -8,7 +8,7 @@
 import SwiftUI
 import Foundation
 
-// MARK: - MultipleSelectionRowWithImage
+
 struct MultipleSelectionRowWithImage: View {
     var title: String
     var imageURL: String

@@ -10,7 +10,7 @@ import FirebaseFirestore
 import EventKit
 
 struct Product_Page: View {
-    // MARK: - Share Sheet Properties
+
     @State private var showShareSheet: Bool = false
     
     @State private var product_img: String = ""
@@ -33,7 +33,6 @@ struct Product_Page: View {
     private let db = Firestore.firestore()
     private let eventStore = EKEventStore()
     
-    // Variables for product details
     @State private var product_name: String = ""
     @State private var seller_name: String = ""
     @State private var seller_likes: String = ""
@@ -60,20 +59,16 @@ struct Product_Page: View {
     @State private var displayedReviews: [Review] = []
     @State private var reviewsToShow: Int = 5
     
-    
-    // MARK: - Alert Properties
     @State private var showingAlert: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     
-    // MARK: - Pagination State Variables
     @State private var lastReviewDocument: DocumentSnapshot? = nil
     @State private var isLoadingMore: Bool = false
     @State private var allReviewsLoaded: Bool = false
-    let pageSize = 5 // Number of reviews per page
+    let pageSize = 5
     
     private var formattedPrice: String {
-        // Attempt to convert price string to Double
         if let priceDouble = Double(product_price) {
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
@@ -147,7 +142,6 @@ struct Product_Page: View {
                                     
                                     Spacer()
                                     
-                                    // Heart Icon with tap gesture
                                     Image(isFavorite ? "heart-icon-filled" : "heart-icon-only-border")
                                         .resizable()
                                         .scaledToFit()
@@ -184,11 +178,10 @@ struct Product_Page: View {
                                             }
                                         }
                                         
-                                        // NavigationLink for seller name
                                         NavigationLink(destination: Seller_Profile(sellerID: seller_id)) {
                                             Text(seller_name)
                                                 .font(.custom("Heebo-Regular", size: 12))
-                                                .foregroundColor(.black) // Make it look clickable
+                                                .foregroundColor(.black)
                                         }
                                         
                                         Text(seller_likes)
@@ -203,8 +196,7 @@ struct Product_Page: View {
                                         .foregroundColor(Color(hexValue: "#F2A213"))
                                 }
                                 
-                                
-                                // Horizontal Scroll for Action Buttons
+                        
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 15) {
                                         // Like Button with tap gesture
@@ -227,8 +219,8 @@ struct Product_Page: View {
                                         IconActionButton(iconName: "star-icon-product", label: String(format: "%.1f", product_ratings))
                                             .onTapGesture {
                                                 withAnimation {
-                                                    showRatingInput.toggle() // Toggle the rating input modal
-                                                    showReviews.toggle()// Show reviews when rating input is toggled
+                                                    showRatingInput.toggle()
+                                                    showReviews.toggle()
                                                 }
                                             }
                                         
@@ -1077,14 +1069,12 @@ struct Product_Page: View {
     }
 }
 
-// Add this struct below your existing structs
 struct RecentlyVisitedProduct: Identifiable, Codable {
-    var id: String { productID } // Conform to Identifiable
+    var id: String { productID }
     let productID: String
     let timestamp: Timestamp
 }
 
-// Utility to create a color from hex value
 extension Color {
     init(hexValue: String) {
         let scanner = Scanner(string: hexValue)
@@ -1100,7 +1090,7 @@ extension Color {
         self.init(red: red, green: green, blue: blue)
     }
 }
-// MARK: - ShareSheet for UIActivityViewController
+
 struct ShareSheet: UIViewControllerRepresentable {
     var items: [Any]
     var activities: [UIActivity]? = nil

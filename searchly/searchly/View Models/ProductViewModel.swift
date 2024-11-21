@@ -109,7 +109,7 @@ class ProductViewModel: ObservableObject {
                 let categories = data["categories"] as? [String] ?? []
                 let imageName = data["product_image"] as? String ?? "placeholder"
                 
-                group.enter() // Enter group for seller query
+                group.enter()
                 self.db.collection("sellers").document(sellerID).getDocument { sellerSnapshot, error in
                     var sellerName = "Unknown Seller"
                     var sellerLocation: CLLocationCoordinate2D? = nil
@@ -119,21 +119,21 @@ class ProductViewModel: ObservableObject {
                     if let sellerData = sellerSnapshot?.data() {
                         sellerName = sellerData["name"] as? String ?? sellerName
                         
-                        // Parse seller location
+   
                         if let locationData = sellerData["location"] as? [String: Any],
                            let lat = locationData["lat"] as? Double,
                            let long = locationData["long"] as? Double {
                             sellerLocation = CLLocationCoordinate2D(latitude: lat, longitude: long)
                         }
                         
-                        // Parse seller apps
+
                         if let apps = sellerData["apps"] as? [String] {
                             sellerApps = apps.compactMap { appID in
                                 self.allAppFilters.first(where: { $0.id == appID })
                             }
                         }
                         
-                        // Parse seller contact methods
+
                         if let contacts = sellerData["contact_methods"] as? [String] {
                             sellerContacts = contacts.compactMap { contactID in
                                 self.allContactMethodFilters.first(where: { $0.id == contactID })
@@ -175,7 +175,7 @@ class ProductViewModel: ObservableObject {
                                     dislikes: product.dislikes,
                                     rating: product.rating,
                                     imageName: product.imageName,
-                                    imageData: product.imageData, // Include image data
+                                    imageData: product.imageData,
                                     siteName: product.siteName,
                                     locationLatitude: product.location?.latitude,
                                     locationLongitude: product.location?.longitude
@@ -248,15 +248,15 @@ class ProductViewModel: ObservableObject {
                     likes: Int(coreDataProduct.likes),
                     dislikes: Int(coreDataProduct.dislikes),
                     rating: coreDataProduct.rating,
-                    categories: [], // Empty array for Core Data
+                    categories: [],
                     imageName: coreDataProduct.imageName ?? "",
-                    imageData: coreDataProduct.imageData, // Include image data
+                    imageData: coreDataProduct.imageData,
                     location: CLLocationCoordinate2D(
                         latitude: coreDataProduct.locationLatitude,
                         longitude: coreDataProduct.locationLongitude
                     ),
-                    sellerApps: [], // Empty array for Core Data
-                    sellerContacts: [] // Empty array for Core Data
+                    sellerApps: [],
+                    sellerContacts: []
                 )
             }
             

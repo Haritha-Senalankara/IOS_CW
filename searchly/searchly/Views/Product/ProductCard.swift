@@ -8,7 +8,6 @@
 import SwiftUI
 import Foundation
 
-// MARK: - ProductCard
 struct ProductCard: View {
     var imageName: String
     var name: String
@@ -20,7 +19,6 @@ struct ProductCard: View {
     
     // Number formatter for price
     private var formattedPrice: String {
-        // Attempt to convert price string to Double
         if let priceDouble = Double(price) {
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
@@ -68,9 +66,9 @@ struct ProductCard: View {
             Text(name)
                 .font(.custom("Heebo-Bold", size: 14))
                 .foregroundColor(.black)
-                .lineLimit(3) // Limit to 3 lines
-                .truncationMode(.tail) // Add ellipsis if text exceeds 3 lines
-                .frame(maxWidth: 169, alignment: .leading) // Restrict width to 169 and align to leading
+                .lineLimit(3)
+                .truncationMode(.tail)
+                .frame(maxWidth: 169, alignment: .leading)
 
             
             Divider()

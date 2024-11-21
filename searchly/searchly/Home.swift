@@ -9,7 +9,6 @@ import SwiftUI
 import FirebaseFirestore
 import MapKit
 
-// MARK: - Home View
 struct Home: View {
     
     @State private var isLoading: Bool = true
@@ -36,7 +35,6 @@ struct Home: View {
     @State private var selectedContactMethodFilters: [String] = []
     
     
-    // Navigation States
     @State private var searchText: String = ""
     @State private var selectedTab: BottomNavBar.NavTab = .home
     @State private var navigateToProfile = false
@@ -61,7 +59,6 @@ struct Home: View {
                     }
                 )
                 
-                // Conditionally Display Content Based on Selected Tab
                 if selectedTab == .home {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         FilterButton(iconName: "location-icon", title: "Location") {
@@ -118,16 +115,13 @@ struct Home: View {
                         .padding(.top, 10)
                     }
                 } else if selectedTab == .favorites {
-                    // Favorites Content
                     Wishlist()
                 } else if selectedTab == .settings {
-                    // Settings Content
                     Settings()
                 }
                 
-                Spacer() // Pushes content to the top
+                Spacer()
                 
-                // Bottom Navigation Bar
                 BottomNavBar(selectedTab: selectedTab) { tab in
                     selectedTab = tab
                 }
@@ -144,7 +138,6 @@ struct Home: View {
             .sheet(isPresented: $navigateToNotification) {
                 Notifications()
             }
-            // Sheets for Filters
             .sheet(isPresented: $showLocationFilter) {
                 LocationFilterView(
                     selectedLocation: $selectedLocation,
@@ -230,7 +223,6 @@ struct Home: View {
     }
 }
 
-// MARK: - Preview
 struct Home_Previews: PreviewProvider {
     static var previews: some View {
         Home()

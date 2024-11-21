@@ -182,7 +182,6 @@ struct Seller_Profile: View {
             fetchSellerData()
             viewModel.fetchProducts(sellerID: sellerID)
         }
-        //        .navigationBarBackButtonHidden(true)
         
         // Sheets for Profile and Notifications
         .sheet(isPresented: $navigateToProfile) {

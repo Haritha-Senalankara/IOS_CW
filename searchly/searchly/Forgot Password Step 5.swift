@@ -12,7 +12,7 @@ struct Forgot_Password_Step_5: View {
         VStack(spacing: 30) {
             Spacer()
             
-            Image("thumbs-up") // Make sure this matches the image in your assets
+            Image("thumbs-up")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 100, height: 100)
@@ -26,7 +26,6 @@ struct Forgot_Password_Step_5: View {
             Spacer()
             
             Button(action: {
-                // Back to login action
             }) {
                 Text("Back To Login")
                     .frame(maxWidth: .infinity)

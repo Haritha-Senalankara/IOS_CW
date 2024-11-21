@@ -5,7 +5,7 @@ import GoogleSignInSwift
 import FirebaseFirestore
 import LocalAuthentication
 import Security
-import Foundation // Ensure this import is present
+import Foundation
 
 struct Login_or_Signup: View {
     @State private var errorMessage: String = ""
@@ -40,9 +40,7 @@ struct Login_or_Signup: View {
                 Spacer()
                 
                 VStack(spacing: 15) {
-                    // Apple Login Button (Implementation needed)
                     Button(action: {
-                        // Apple login action
                     }) {
                         HStack {
                             Image("Apple Logo")
@@ -60,7 +58,6 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                     
-                    // Google Login Button
                     Button(action: {
                         signInWithGoogle()
                     }) {
@@ -85,7 +82,6 @@ struct Login_or_Signup: View {
                         Alert(title: Text("Authentication Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                     }
                     
-                    // Email Login Button
                     Button(action: {
                         navigateToEmailLogin = true
                     }) {
@@ -107,7 +103,6 @@ struct Login_or_Signup: View {
                     }
                     .padding(.horizontal, 30)
                     
-                    // Face ID Authentication Button
                     Button(action: {
                         authenticateWithFaceID()
                     }) {
@@ -162,8 +157,6 @@ struct Login_or_Signup: View {
         .navigationBarBackButtonHidden(true)
     }
     
-    // MARK: - Google Sign-In
-    
     func signInWithGoogle() {
         guard let presentingViewController = UIApplication.shared.windows.first?.rootViewController else {
             self.errorMessage = "Unable to access root view controller."
@@ -214,7 +207,6 @@ struct Login_or_Signup: View {
         }
     }
     
-    // MARK: - User Existence Check and Save
     
     func checkUserExistsAndSave(userID: String, email: String, firstName: String, lastName: String, profileImage: String) {
         db.collection("customers").document(userID).getDocument { document, error in
@@ -248,7 +240,6 @@ struct Login_or_Signup: View {
         }
     }
     
-    // MARK: - Face ID Authentication
     
     func authenticateWithFaceID() {
         let context = LAContext()
@@ -260,7 +251,6 @@ struct Login_or_Signup: View {
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
                 DispatchQueue.main.async {
                     if success {
-                        // Retrieve user ID from UserDefaults and proceed
                         if let userID = UserDefaults.standard.string(forKey: "userID") {
                             print("Authenticated with Face ID. User ID retrieved: \(userID)")
                             self.navigateToHome = true
@@ -269,7 +259,6 @@ struct Login_or_Signup: View {
                             self.showAlert = true
                         }
                     } else {
-                        // Handle Face ID authentication failure
                         print("Face ID failed: \(authenticationError?.localizedDescription ?? "Unknown error")")
                         self.errorMessage = "Face ID authentication failed. Please try again."
                         self.showAlert = true
@@ -277,7 +266,6 @@ struct Login_or_Signup: View {
                 }
             }
         } else {
-            // Handle case where Face ID is unavailable
             DispatchQueue.main.async {
                 self.errorMessage = "Face ID is not available on this device."
                 self.showAlert = true
@@ -286,8 +274,7 @@ struct Login_or_Signup: View {
     }
     
     
-    
-    // MARK: - Helper Function to Store User ID
+
     func storeUserID(_ userID: String) {
         let userIDData = Data(userID.utf8)
         KeychainHelper.shared.save(key: "authenticatedUser", data: userIDData)

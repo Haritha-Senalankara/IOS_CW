@@ -172,7 +172,6 @@ struct Customer_Profile: View {
         }
     }
     
-    // MARK: - Generate and Send OTP
     private func generateAndSendOTP() {
         guard !phoneNumber.isEmpty else {
             print("Phone number is empty")
@@ -222,7 +221,6 @@ struct Customer_Profile: View {
         }
     }
     
-    // MARK: - Save Profile to Firestore
     private func saveProfile() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found")
@@ -246,7 +244,6 @@ struct Customer_Profile: View {
         }
     }
     
-    // MARK: - Fetch Customer Profile
     private func fetchCustomerProfile() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
@@ -276,7 +273,6 @@ struct Customer_Profile: View {
         }
     }
     
-    // MARK: - Fetch Recently Viewed Products
     private func fetchRecentlyViewedProducts() {
         guard let userID = UserDefaults.standard.string(forKey: "userID") else {
             print("User ID not found in UserDefaults")
@@ -411,7 +407,6 @@ struct StatusPopup: View {
     }
 }
 
-// MARK: - OTP Verification Popup
 struct OTPVerificationPopup: View {
     @Binding var enteredOTP: String
     let generatedOTP: String

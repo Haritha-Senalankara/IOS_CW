@@ -16,5 +16,5 @@ struct Review: Identifiable {
     var userName: String
     var rating: Int
     var comment: String
-    var timestamp: Timestamp // Added timestamp for pagination
+    var timestamp: Timestamp
 }

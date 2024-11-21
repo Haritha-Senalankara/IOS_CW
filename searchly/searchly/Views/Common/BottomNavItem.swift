@@ -8,7 +8,6 @@
 import SwiftUI
 import Foundation
 
-// MARK: - BottomNavItem
 struct BottomNavItem: View {
     var iconName: String
     var title: String

@@ -109,7 +109,6 @@ struct Notifications: View {
         }
     }
     
-    // MARK: - Fetch User ID from UserDefaults
     private func fetchUserID() {
         if let uid = UserDefaults.standard.string(forKey: "userID"), !uid.isEmpty {
             self.userID = uid
@@ -170,10 +169,9 @@ struct Notifications: View {
         }
     }
 
-    // MARK: - Remove Individual Notification
     private func removeNotification(at index: Int) {
         let notification = notifications[index]
-        notifications.remove(at: index) // Update UI immediately
+        notifications.remove(at: index)
         
         // Update Firestore to remove the notification
         guard !userID.isEmpty else { return }
@@ -190,7 +188,6 @@ struct Notifications: View {
         }
     }
     
-    // MARK: - Clear All Notifications
     private func clearAllNotifications() {
         guard !userID.isEmpty else { return }
         let customerRef = db.collection("customers").document(userID)

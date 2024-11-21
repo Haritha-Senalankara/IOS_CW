@@ -39,7 +39,6 @@ struct PrivacyPolicySheet: View {
     private func dismiss() {}
 }
 
-// MARK: - Settings Page
 struct Settings: View {
     @State private var isNotificationEnabled: Bool = true
     @State private var isFaceIDEnabled: Bool = true
@@ -52,14 +51,14 @@ struct Settings: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Title
+    
             Text("Settings")
                 .font(.custom("Heebo-Bold", size: 24))
                 .foregroundColor(Color(hexValue: "#606084"))
                 .padding(.top, 5)
                 .padding(.bottom, 20)
             
-            // Settings Options
+           
             ScrollView {
                 VStack(spacing: 0) {
                     // Notification Toggle
@@ -227,14 +226,14 @@ struct Settings: View {
                 } else {
                     print("Notification status not found, setting default to true.")
                     DispatchQueue.main.async {
-                        self.isNotificationEnabled = true // Default value
+                        self.isNotificationEnabled = true
                     }
                 }
             } else {
                 print("Document not found, setting notification statuses to default.")
                 DispatchQueue.main.async {
-                    self.pushNotificationsEnabled = true // Default value
-                    self.isNotificationEnabled = true   // Default value
+                    self.pushNotificationsEnabled = true
+                    self.isNotificationEnabled = true
                 }
             }
         }
@@ -253,7 +252,6 @@ struct Settings: View {
             }
             if let data = document?.data(), let faceIDStatus = data["isFaceIDEnabled"] as? Bool {
                 DispatchQueue.main.async {
-                    // Silently update the toggle state without triggering onChange logic
                     self.isFaceIDEnabled = faceIDStatus
                 }
                 print("Fetched Face ID status: \(faceIDStatus)")
@@ -344,11 +342,7 @@ struct Settings: View {
     }
     
     
-    
-    
-    
-    
-    
+
     private func authenticateWithFaceID() {
         let context = LAContext()
         var error: NSError?
@@ -395,7 +389,6 @@ struct Settings: View {
         }
     }
     
-    // MARK: - Logout Function with UserDefaults Reset and Logout Status
     private func logout() {
         do {
             // Save logout status in UserDefaults
@@ -412,13 +405,12 @@ struct Settings: View {
     }
     
     
-    // MARK: - Delete Account Function with Confirmation
     private func deleteAccount() {
         guard let user = Auth.auth().currentUser else { return }
         let uid = user.uid
         let db = Firestore.firestore()
         
-        // Step 1: Show Confirmation Alert
+
         let confirmationAlert = UIAlertController(
             title: "Delete Account",
             message: "Are you sure you want to delete your account? This action cannot be undone.",
@@ -426,8 +418,6 @@ struct Settings: View {
         )
         confirmationAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         confirmationAlert.addAction(UIAlertAction(title: "Confirm", style: .destructive, handler: { _ in
-            // Step 2: Proceed with Account Deletion
-            // Remove data from all collections
             db.collection("customers").document(uid).delete { error in
                 if let error = error {
                     print("Error deleting customer data: \(error.localizedDescription)")
@@ -449,14 +439,12 @@ struct Settings: View {
             }
         }))
         
-        // Present Alert (Assumes UIKit integration; replace with SwiftUI equivalent if needed)
         UIApplication.shared.windows.first?.rootViewController?.present(confirmationAlert, animated: true)
     }
     
     private func clearAllUserDefaults() {
         let defaults = UserDefaults.standard
         
-        // Check if UserDefaults already empty
         if defaults.dictionaryRepresentation().isEmpty {
             print("UserDefaults are already empty.")
             return

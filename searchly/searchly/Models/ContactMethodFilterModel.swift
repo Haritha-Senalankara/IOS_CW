@@ -7,9 +7,8 @@
 
 import Foundation
 
-// MARK: - ContactMethodFilter Model
 struct ContactMethodFilter: Identifiable {
     var id: String
     var name: String
-    var imageURL: String // URL for contact method image
+    var imageURL: String
 }

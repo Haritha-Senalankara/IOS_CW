@@ -12,7 +12,7 @@ import Foundation
 struct LikesFilterView: View {
     @Binding var selectedLikes: Int
     @Binding var isPresented: Bool
-    var onApply: () -> Void // Closure to execute when 'Apply' is tapped
+    var onApply: () -> Void
     
     @State private var stepCount: Double = 10
     @State private var minRange: Double = 0

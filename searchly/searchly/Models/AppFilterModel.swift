@@ -8,9 +8,8 @@
 import Foundation
 
 
-// MARK: - AppFilter Model
 struct AppFilter: Identifiable {
     var id: String
     var name: String
-    var imageURL: String // URL for app image
+    var imageURL: String
 }

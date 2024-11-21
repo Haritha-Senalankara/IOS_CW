@@ -9,7 +9,6 @@ import SwiftUI
 import Foundation
 import MapKit
 
-// MARK: - MapViewRepresentable
 struct MapViewRepresentable: UIViewRepresentable {
     @Binding var centerCoordinate: CLLocationCoordinate2D?
     @Binding var selectedRadius: Double
@@ -25,21 +24,17 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
     
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        // Remove existing overlays and annotations
         mapView.removeOverlays(mapView.overlays)
         mapView.removeAnnotations(mapView.annotations)
         
         if let centerCoordinate = centerCoordinate {
-            // Add annotation
             let annotation = MKPointAnnotation()
             annotation.coordinate = centerCoordinate
             mapView.addAnnotation(annotation)
-            
-            // Add circle overlay
+    
             let circle = MKCircle(center: centerCoordinate, radius: selectedRadius)
             mapView.addOverlay(circle)
             
-            // Set region
             let region = MKCoordinateRegion(center: centerCoordinate, latitudinalMeters: selectedRadius * 2.5, longitudinalMeters: selectedRadius * 2.5)
             mapView.setRegion(region, animated: true)
         }
@@ -64,7 +59,6 @@ struct MapViewRepresentable: UIViewRepresentable {
             parent.centerCoordinate = coordinate
         }
         
-        // MKMapViewDelegate method to render overlays
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let circleOverlay = overlay as? MKCircle {
                 let renderer = MKCircleRenderer(circle: circleOverlay)

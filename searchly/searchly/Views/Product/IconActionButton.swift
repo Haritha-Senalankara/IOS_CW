@@ -8,7 +8,6 @@
 import SwiftUI
 import Foundation
 
-// Reusable Icon Button Component for Product Actions
 struct IconActionButton: View {
     var iconName: String
     var label: String
@@ -18,7 +17,7 @@ struct IconActionButton: View {
             Image(iconName)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 18, height: 18) // Adjust icon size for consistency
+                .frame(width: 18, height: 18)
             if !label.isEmpty {
                 Text(label)
                     .font(.custom("Heebo-Regular", size: 12))

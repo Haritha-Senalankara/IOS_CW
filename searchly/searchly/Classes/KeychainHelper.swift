@@ -8,7 +8,6 @@ struct KeychainHelper {
     
     
     func save(key: String, data: Data) {
-        // Define query
         let query: [String: Any] = [
             kSecClass as String       : kSecClassGenericPassword,
             kSecAttrAccount as String : key,
@@ -20,7 +19,6 @@ struct KeychainHelper {
     
     
     func read(key: String) -> Data? {
-        // Define query
         let query: [String: Any] = [
             kSecClass as String       : kSecClassGenericPassword,
             kSecAttrAccount as String : key,
@@ -40,7 +38,6 @@ struct KeychainHelper {
     }
     
     func delete(key: String) {
-        // Define query
         let query: [String: Any] = [
             kSecClass as String       : kSecClassGenericPassword,
             kSecAttrAccount as String : key

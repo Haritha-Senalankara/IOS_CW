@@ -14,7 +14,7 @@ struct Forgot_Password_Step_2: View {
         VStack(spacing: 20) {
             Spacer()
             
-            Image("App Logo") // Make sure this matches the image in your assets
+            Image("App Logo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 100, height: 100)

@@ -8,12 +8,12 @@
 import SwiftUI
 import Foundation
 
-// MARK: - ContactFilterView
+
 struct ContactFilterView: View {
     @Binding var selectedContactMethodFilters: [String]
     @Binding var isPresented: Bool
     var allContactMethodFilters: [ContactMethodFilter]
-    var onApply: () -> Void // Closure to execute when 'Apply' is tapped
+    var onApply: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {

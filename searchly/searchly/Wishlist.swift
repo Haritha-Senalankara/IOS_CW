@@ -52,7 +52,7 @@ struct Wishlist: View {
                 }
             }
             
-            Spacer() // Push the bottom navigation bar to the bottom
+            Spacer()
             
         }
         .background(Color.white)
@@ -62,7 +62,7 @@ struct Wishlist: View {
         }
         .background(
             NavigationLink(
-                destination: Customer_Profile(), // Navigate to Customer_Profile view
+                destination: Customer_Profile(),
                 isActive: $navigateToProfile
             ) {
                 EmptyView()

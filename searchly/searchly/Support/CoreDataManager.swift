@@ -53,7 +53,6 @@ class CoreDataManager {
                 product.id = id
             }
             
-            // Update only savable properties
             product.name = name
             product.price = price
             product.likes = Int32(likes)

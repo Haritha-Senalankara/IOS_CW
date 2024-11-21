@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-// MARK: - RatingFilterView
+
 struct RatingFilterView: View {
     @Binding var selectedRating: Double
     @Binding var isPresented: Bool
-    var onApply: () -> Void // Closure to execute when 'Apply' is tapped
+    var onApply: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {

@@ -12,7 +12,7 @@ struct PriceFilterView: View {
     @Binding var selectedMinPrice: Double
     @Binding var selectedMaxPrice: Double
     @Binding var isPresented: Bool
-    var onApply: () -> Void // Closure to execute when 'Apply' is tapped
+    var onApply: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {

@@ -15,7 +15,6 @@ class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func setupUserID() {
-        // Fetch User ID from UserDefaults
         if let uid = UserDefaults.standard.string(forKey: "userID") {
             self.userID = uid
             setupRealtimeListener()
@@ -37,14 +36,13 @@ class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
             }
 
             guard let data = snapshot?.data(),
-                  let notifications = data["notifications"] as? [[String: Any]], // Notifications as array of dictionaries
+                  let notifications = data["notifications"] as? [[String: Any]],
                   let notificationStatus = data["notification_status"] as? Bool,
                   let pushNotificationStatus = data["push_notifications"] as? Bool else {
                 print("Required fields missing or invalid in Firestore document.")
                 return
             }
 
-            // Check if both notifications and push notifications are enabled
             if notificationStatus && pushNotificationStatus {
                 self.processAndScheduleNotifications(notifications, for: customerRef)
             } else {
@@ -54,12 +52,11 @@ class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func processAndScheduleNotifications(_ notifications: [[String: Any]], for customerRef: DocumentReference) {
-        var updatedNotifications = notifications // Mutable copy of the notifications
+        var updatedNotifications = notifications
 
         for (index, notification) in notifications.enumerated() {
-            // Use the index as the unique identifier for this notification
             guard let displayed = notification["displayed"] as? Bool, !displayed else {
-                continue // Skip already displayed notifications
+                continue
             }
 
             let content = UNMutableNotificationContent()
