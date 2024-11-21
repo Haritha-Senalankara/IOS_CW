@@ -297,11 +297,11 @@
 		86B19FA62CE0B60300A71737 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				86B19F992CE0B41800A71737 /* MapViewRepresentable.swift */,
 				86B19F912CE0B2FA00A71737 /* AppFilterView.swift */,
 				86B19F932CE0B34A00A71737 /* ContactFilterView.swift */,
 				86B19F952CE0B37900A71737 /* MultipleSelectionRowWithImage.swift */,
 				86B19F972CE0B39800A71737 /* LocationFilterView.swift */,
-				86B19F992CE0B41800A71737 /* MapViewRepresentable.swift */,
 				86B19F9D2CE0B4B900A71737 /* FilterButton.swift */,
 				86B19F9F2CE0B4D900A71737 /* LikesFilterView.swift */,
 				86B19FA12CE0B4FB00A71737 /* RatingFilterView.swift */,

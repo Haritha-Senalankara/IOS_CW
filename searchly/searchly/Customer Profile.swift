@@ -19,6 +19,13 @@ struct Customer_Profile: View {
     @State private var enteredOTP: String = ""
     @State private var showOTPPopup: Bool = false
     
+    @State private var showStatusPopup: Bool = false
+    @State private var popupTitle: String = ""
+    @State private var popupMessage: String = ""
+    @State private var popupImageName: String = ""
+    
+    @State private var isSuccess: Bool = false
+    
     private let db = Firestore.firestore()
     
     var body: some View {
@@ -154,6 +161,14 @@ struct Customer_Profile: View {
                     onVerify: verifyOTP
                 )
             }
+            .sheet(isPresented: $showStatusPopup) {
+                StatusPopup(
+                    isSuccess: isSuccess,
+                    onDismiss: {
+                        showStatusPopup = false // Dismiss the popup
+                    }
+                )
+            }
         }
     }
     
@@ -184,13 +199,21 @@ struct Customer_Profile: View {
         }
     }
     
-    // MARK: - Verify OTP
     private func verifyOTP() {
         if enteredOTP == generatedOTP {
             saveProfile() // Save the profile if OTP matches
-            showOTPPopup = false // Dismiss the popup
+            isSuccess = true
         } else {
-            print("Invalid OTP")
+            isSuccess = false
+        }
+
+        // Reset and trigger the popup
+        DispatchQueue.main.async {
+            showStatusPopup = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                showStatusPopup = true
+            }
+            showOTPPopup = false // Dismiss the OTP popup
         }
     }
     
@@ -338,36 +361,41 @@ struct Customer_Profile: View {
     }
 }
 
-// MARK: - OTP Verification Popup
-struct OTPVerificationPopup: View {
-    @Binding var enteredOTP: String
-    let generatedOTP: String
-    let onVerify: () -> Void
-    
+struct StatusPopup: View {
+    let isSuccess: Bool
+    let onDismiss: () -> Void
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("Verify OTP")
+            // Icon for success or error
+            Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 50, height: 50)
+                .foregroundColor(isSuccess ? Color(hexValue: "#34C759") : Color(hexValue: "#FF3B30")) // Success green and error red
+
+            // Title for success or error
+            Text(isSuccess ? "Success" : "Error")
                 .font(.headline)
-            
-            TextField("Enter OTP", text: $enteredOTP)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.numberPad)
-            
-            Button(action: onVerify) {
-                Text("Verify")
+                .foregroundColor(isSuccess ? Color(hexValue: "#34C759") : Color(hexValue: "#FF3B30"))
+
+            // Message for success or error
+            Text(isSuccess
+                 ? "Your profile has been updated successfully."
+                 : "The OTP you entered is incorrect. Please try again.")
+                .multilineTextAlignment(.center)
+                .font(.subheadline)
+                .foregroundColor(Color(hexValue: "#102A36")) // Use the primary text color
+
+            // OK Button
+            Button(action: onDismiss) {
+                Text("OK")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.yellow)
+                    .background(isSuccess ? Color(hexValue: "#34C759") : Color(hexValue: "#FF3B30")) // Button background colors
                     .foregroundColor(.white)
                     .cornerRadius(10)
-            }
-            
-            Button(action: {
-                UIApplication.shared.windows.first?.rootViewController?.dismiss(animated: true)
-            }) {
-                Text("Cancel")
-                    .foregroundColor(.red)
             }
         }
         .padding()
@@ -377,6 +405,69 @@ struct OTPVerificationPopup: View {
         .frame(maxWidth: 300)
     }
 }
+
+// MARK: - OTP Verification Popup
+struct OTPVerificationPopup: View {
+    @Binding var enteredOTP: String
+    let generatedOTP: String
+    let onVerify: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Title
+            Text("Verify OTP")
+                .font(.headline)
+                .foregroundColor(Color(hexValue: "#102A36")) // Primary text color
+            
+            // Instructions
+            Text("Enter the 6-digit OTP sent to your registered phone number.")
+                .font(.subheadline)
+                .foregroundColor(Color(hexValue: "#6C757D")) // Secondary text color
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
+
+            // OTP Input
+            TextField("Enter OTP", text: $enteredOTP)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .keyboardType(.numberPad)
+                .padding(.horizontal, 10)
+
+            // Verify Button
+            Button(action: onVerify) {
+                Text("Verify OTP")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(hexValue: "#F2A213")) // Button background
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .padding(.horizontal, 20)
+
+            // Resend OTP Instructions
+            Text("Didn't receive the OTP? Please wait for a moment, or ensure your phone number is correct.")
+                .font(.footnote)
+                .foregroundColor(Color(hexValue: "#6C757D")) // Secondary text color
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
+
+            // Cancel Button
+            Button(action: {
+                UIApplication.shared.windows.first?.rootViewController?.dismiss(animated: true)
+            }) {
+                Text("Cancel")
+                    .foregroundColor(Color(hexValue: "#FF3B30")) // Error red color
+                    .font(.headline)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(15)
+        .shadow(radius: 10)
+        .frame(maxWidth: 300)
+    }
+}
+
 
 // MARK: - Preview
 #Preview {
