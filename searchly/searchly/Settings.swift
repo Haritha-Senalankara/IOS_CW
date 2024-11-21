@@ -196,19 +196,46 @@ struct Settings: View {
             print("User not authenticated.")
             return
         }
+        
         let db = Firestore.firestore()
         db.collection("customers").document(uid).getDocument { document, error in
             if let error = error {
-                print("Error fetching push notification status: \(error.localizedDescription)")
+                print("Error fetching notification statuses: \(error.localizedDescription)")
                 return
             }
-            if let data = document?.data(), let pushStatus = data["push_notifications"] as? Bool {
-                DispatchQueue.main.async {
-                    self.pushNotificationsEnabled = pushStatus
+            
+            if let data = document?.data() {
+                // Update push notifications status
+                if let pushStatus = data["push_notifications"] as? Bool {
+                    DispatchQueue.main.async {
+                        self.pushNotificationsEnabled = pushStatus
+                    }
+                    print("Fetched push notifications status: \(pushStatus)")
+                } else {
+                    print("Push notifications status not found, setting default to true.")
+                    DispatchQueue.main.async {
+                        self.pushNotificationsEnabled = true // Default value
+                    }
                 }
-                print("Fetched push notification status: \(pushStatus)")
+                
+                // Update notification status
+                if let notificationStatus = data["notification_status"] as? Bool {
+                    DispatchQueue.main.async {
+                        self.isNotificationEnabled = notificationStatus
+                    }
+                    print("Fetched notification status: \(notificationStatus)")
+                } else {
+                    print("Notification status not found, setting default to true.")
+                    DispatchQueue.main.async {
+                        self.isNotificationEnabled = true // Default value
+                    }
+                }
             } else {
-                print("Push notification status not found in Firestore.")
+                print("Document not found, setting notification statuses to default.")
+                DispatchQueue.main.async {
+                    self.pushNotificationsEnabled = true // Default value
+                    self.isNotificationEnabled = true   // Default value
+                }
             }
         }
     }

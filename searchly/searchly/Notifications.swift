@@ -121,32 +121,49 @@ struct Notifications: View {
         }
     }
     
-    // MARK: - Load Notifications from Firestore
     private func loadNotifications() {
         guard !userID.isEmpty else { return }
         let customerRef = db.collection("customers").document(userID)
         
         customerRef.getDocument { document, error in
             if let error = error {
-                self.errorMessage = "Failed to load notifications."
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to load notifications."
+                    self.isLoading = false
+                }
                 print("Error fetching notifications: \(error.localizedDescription)")
                 return
             }
             
             guard let data = document?.data() else {
-                self.notifications = []
+                DispatchQueue.main.async {
+                    self.notifications = []
+                    self.isLoading = false
+                }
                 return
             }
             
+            // Check notification status
             if let notifStatus = data["notification_status"] as? Bool {
                 DispatchQueue.main.async {
                     self.notificationEnabled = notifStatus
+                    if !notifStatus {
+                        // If notifications are disabled, stop loading immediately
+                        self.isLoading = false
+                        self.notifications = []
+                    }
                 }
             }
             
-            if let notifArray = data["notifications"] as? [[String: Any]] {
+            // Load notifications only if enabled
+            if let notifArray = data["notifications"] as? [[String: Any]], self.notificationEnabled {
                 DispatchQueue.main.async {
                     self.notifications = notifArray
+                    self.isLoading = false
+                }
+            } else {
+                // Stop loading if no notifications are available
+                DispatchQueue.main.async {
                     self.isLoading = false
                 }
             }

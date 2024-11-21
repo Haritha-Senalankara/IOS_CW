@@ -24,7 +24,7 @@ struct Customer_Profile: View {
     @State private var popupMessage: String = ""
     @State private var popupImageName: String = ""
     
-    @State private var isSuccess: Bool = false
+    @State private var isSuccess: Bool = true
     
     private let db = Firestore.firestore()
     
@@ -200,20 +200,25 @@ struct Customer_Profile: View {
     }
     
     private func verifyOTP() {
-        if enteredOTP == generatedOTP {
-            saveProfile() // Save the profile if OTP matches
+        print("Generated OTP: \(generatedOTP), Entered OTP: \(enteredOTP)") // Debugging
+        isSuccess = true
+        if enteredOTP.trimmingCharacters(in: .whitespacesAndNewlines) == generatedOTP {
+            print("OTP matched! Showing success.")
+            isSuccess = true
+            saveProfile()
             isSuccess = true
         } else {
+            print("OTP mismatch. Showing error.")
             isSuccess = false
         }
 
-        // Reset and trigger the popup
         DispatchQueue.main.async {
             showStatusPopup = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                print("Showing status popup with isSuccess = \(isSuccess)")
                 showStatusPopup = true
             }
-            showOTPPopup = false // Dismiss the OTP popup
+            showOTPPopup = false
         }
     }
     
