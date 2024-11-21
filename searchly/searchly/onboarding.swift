@@ -83,29 +83,39 @@ struct onboarding: View {
                     .hidden()
             )
             .onAppear {
-                checkUserStatus()
+                handleOnAppear()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .navigationBarBackButtonHidden(true)
     }
     
-    // Check the user's login/logout status
-    private func checkUserStatus() {
-        
+    private func handleOnAppear() {
         let defaults = UserDefaults.standard
+        let isFirstLaunch = !defaults.bool(forKey: "hasLaunchedBefore")
+        
+        if isFirstLaunch {
+            defaults.set(true, forKey: "hasLaunchedBefore")
+            print("App launched for the first time. Staying on onboarding screen.")
+        } else {
+            checkUserStatus()
+        }
+    }
+    
+    private func checkUserStatus() {
+        let defaults = UserDefaults.standard
+        
         if defaults.dictionaryRepresentation().isEmpty {
             print("UserDefaults are empty. Doing nothing.")
             return
         }
         
-        let isLoggedOut = UserDefaults.standard.bool(forKey: "isLoggedOut")
+        let isLoggedOut = defaults.bool(forKey: "isLoggedOut")
         
         if isLoggedOut {
             navigateToLoginSignup = true
             print("User is logged out. Redirecting to login/signup page.")
-        } else if let _ = UserDefaults.standard.string(forKey: "userID") {
-            
+        } else if let _ = defaults.string(forKey: "userID") {
             navigateToHome = true
             print("User is logged in. Redirecting to home page.")
         } else {
@@ -119,3 +129,4 @@ struct onboarding: View {
 #Preview {
     onboarding()
 }
+
